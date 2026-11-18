@@ -66,7 +66,10 @@ jobs:
       # Optional. The starter page does not read Supabase, so e2e stays green
       # until a project wires these up in Settings -> Secrets and variables.
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      # src/proxy.ts reads both on every request. With no session cookie it never calls Supabase,
+      # so placeholders keep the signed-out flows testable without secrets.
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'ci-placeholder' }}
+      NEUROTRACK_API_URL: http://127.0.0.1:8000
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
