@@ -355,7 +355,7 @@ function RescorlaWagnerLab({ stress }: { stress: Stress }) {
             }
           />
         </div>
-        <div className="min-w-0 space-y-4" aria-live="polite">
+        <div className="min-w-0 space-y-4">
           {"error" in run ? (
             <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm">
               {run.error}
@@ -383,7 +383,7 @@ function RwSummary({ result }: { result: RwResult }) {
   const last = result.trials.at(-1);
   const rewarded = result.trials.filter((t) => t.rewarded).length;
   return (
-    <dl className="grid grid-cols-3 gap-3 text-sm" data-testid="rw-summary">
+    <dl className="grid grid-cols-3 gap-3 text-sm" data-testid="rw-summary" aria-live="polite">
       <div className="rounded-xl border border-line bg-card p-3">
         <dt className="text-xs text-muted">Final V</dt>
         <dd className="font-mono text-lg">{(last?.v ?? 0).toFixed(3)}</dd>
@@ -503,14 +503,14 @@ function TdLab({ stress }: { stress: Stress }) {
             onClick={() => saveState.save({ model: "td", params: { ...settings, stress } })}
           />
         </div>
-        <div className="min-w-0 space-y-4" aria-live="polite">
+        <div className="min-w-0 space-y-4">
           {"error" in run ? (
             <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm">
               {run.error}
             </p>
           ) : (
             <>
-              <p className="text-sm text-ink-soft" data-testid="td-summary">
+              <p className="text-sm text-ink-soft" data-testid="td-summary" aria-live="polite">
                 Trial {first?.trial}: δ at cue{" "}
                 <span className="font-mono">{first?.cue.toFixed(3)}</span>, δ at reward{" "}
                 <span className="font-mono">{first?.reward.toFixed(3)}</span>. Trial {last?.trial}:
