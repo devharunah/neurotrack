@@ -1,0 +1,602 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "NeuroTrack API",
+    "description": "Scientific computation for NeuroTrack. Educational and experimental; not a clinical tool.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quantum/presets": {
+      "get": {
+        "tags": [
+          "quantum"
+        ],
+        "summary": "List Presets",
+        "operationId": "list_presets_quantum_presets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Preset"
+                  },
+                  "type": "array",
+                  "title": "Response List Presets Quantum Presets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quantum/run": {
+      "post": {
+        "tags": [
+          "quantum"
+        ],
+        "summary": "Run",
+        "operationId": "run_quantum_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/quantum/qml/compare": {
+      "post": {
+        "tags": [
+          "quantum"
+        ],
+        "summary": "Qml Compare",
+        "operationId": "qml_compare_quantum_qml_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QmlCompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QmlCompareResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Amplitude": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "re": {
+            "type": "number",
+            "title": "Re"
+          },
+          "im": {
+            "type": "number",
+            "title": "Im"
+          },
+          "probability": {
+            "type": "number",
+            "title": "Probability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "basis",
+          "re",
+          "im",
+          "probability"
+        ],
+        "title": "Amplitude"
+      },
+      "CircuitSpec": {
+        "properties": {
+          "num_qubits": {
+            "type": "integer",
+            "maximum": 8.0,
+            "minimum": 1.0,
+            "title": "Num Qubits"
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/Gate"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Gates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "num_qubits"
+        ],
+        "title": "CircuitSpec"
+      },
+      "Gate": {
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "x",
+              "y",
+              "z",
+              "h",
+              "cx"
+            ],
+            "title": "Op"
+          },
+          "target": {
+            "type": "integer",
+            "exclusiveMaximum": 8.0,
+            "minimum": 0.0,
+            "title": "Target"
+          },
+          "control": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMaximum": 8.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Control"
+          }
+        },
+        "type": "object",
+        "required": [
+          "op",
+          "target"
+        ],
+        "title": "Gate"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ModelScore": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "family": {
+            "type": "string",
+            "title": "Family"
+          },
+          "accuracy": {
+            "type": "number",
+            "title": "Accuracy"
+          },
+          "f1": {
+            "type": "number",
+            "title": "F1"
+          },
+          "train_ms": {
+            "type": "number",
+            "title": "Train Ms"
+          },
+          "predict_ms": {
+            "type": "number",
+            "title": "Predict Ms"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "family",
+          "accuracy",
+          "f1",
+          "train_ms",
+          "predict_ms",
+          "notes"
+        ],
+        "title": "ModelScore"
+      },
+      "NoiseConfig": {
+        "properties": {
+          "depolarizing_1q": {
+            "type": "number",
+            "maximum": 0.5,
+            "minimum": 0.0,
+            "title": "Depolarizing 1Q",
+            "default": 0.0
+          },
+          "depolarizing_2q": {
+            "type": "number",
+            "maximum": 0.5,
+            "minimum": 0.0,
+            "title": "Depolarizing 2Q",
+            "default": 0.0
+          },
+          "readout": {
+            "type": "number",
+            "maximum": 0.5,
+            "minimum": 0.0,
+            "title": "Readout",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "NoiseConfig",
+        "description": "Simple, documented noise: depolarizing gate errors plus symmetric readout error."
+      },
+      "Preset": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "circuit": {
+            "$ref": "#/components/schemas/CircuitSpec"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "circuit"
+        ],
+        "title": "Preset"
+      },
+      "QmlCompareRequest": {
+        "properties": {
+          "samples": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 20.0,
+            "title": "Samples",
+            "default": 80
+          },
+          "noise": {
+            "type": "number",
+            "maximum": 0.5,
+            "minimum": 0.0,
+            "title": "Noise",
+            "description": "Label-flip probability",
+            "default": 0.1
+          },
+          "feature_map_reps": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Feature Map Reps",
+            "default": 2
+          },
+          "feature_scale": {
+            "type": "number",
+            "maximum": 3.1416,
+            "minimum": 0.1,
+            "title": "Feature Scale",
+            "description": "Features are scaled to [0, feature_scale] before encoding. This acts as the kernel bandwidth: too large and the kernel memorises (near-identity Gram matrix), too small and every point looks alike.",
+            "default": 1.0
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 7
+          }
+        },
+        "type": "object",
+        "title": "QmlCompareRequest"
+      },
+      "QmlCompareResult": {
+        "properties": {
+          "dataset": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Dataset"
+          },
+          "quantum_resources": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Quantum Resources"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelScore"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "caveat": {
+            "type": "string",
+            "title": "Caveat",
+            "default": "Synthetic data, simulated (noise-free) quantum kernel. These numbers compare methods on a toy problem only. They do not demonstrate quantum advantage and say nothing about real behaviour or any individual."
+          }
+        },
+        "type": "object",
+        "required": [
+          "dataset",
+          "quantum_resources",
+          "models"
+        ],
+        "title": "QmlCompareResult"
+      },
+      "RunRequest": {
+        "properties": {
+          "num_qubits": {
+            "type": "integer",
+            "maximum": 8.0,
+            "minimum": 1.0,
+            "title": "Num Qubits"
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/Gate"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Gates"
+          },
+          "shots": {
+            "type": "integer",
+            "maximum": 8192.0,
+            "minimum": 1.0,
+            "title": "Shots",
+            "default": 1024
+          },
+          "noise": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoiseConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "num_qubits"
+        ],
+        "title": "RunRequest"
+      },
+      "RunResult": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Probabilities"
+          },
+          "statevector": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Amplitude"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statevector"
+          },
+          "diagram": {
+            "type": "string",
+            "title": "Diagram"
+          },
+          "depth": {
+            "type": "integer",
+            "title": "Depth"
+          },
+          "shots": {
+            "type": "integer",
+            "title": "Shots"
+          },
+          "noisy": {
+            "type": "boolean",
+            "title": "Noisy"
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "title": "Elapsed Ms"
+          },
+          "bit_order": {
+            "type": "string",
+            "title": "Bit Order",
+            "default": "Qiskit little-endian: rightmost bit is qubit 0"
+          }
+        },
+        "type": "object",
+        "required": [
+          "counts",
+          "probabilities",
+          "statevector",
+          "diagram",
+          "depth",
+          "shots",
+          "noisy",
+          "elapsed_ms"
+        ],
+        "title": "RunResult"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

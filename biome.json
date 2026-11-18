@@ -1,6 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": { "enabled": true },
+  "organizeImports": {
+    "enabled": true
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -25,7 +27,10 @@
       "playwright-report",
       "pnpm-lock.yaml",
       "next-env.d.ts",
-      ".claude/**"
+      ".claude/**",
+      "api/**",
+      "src/lib/api/schema.d.ts",
+      "supabase/**"
     ]
   }
 }

@@ -11,6 +11,10 @@ export default defineConfig([
     "playwright-report/**",
     "test-results/**",
     "next-env.d.ts",
+    "src/lib/api/schema.d.ts",
+    // Python service and Supabase SQL have their own tooling.
+    "api/**",
+    "supabase/**",
     // CommonJS by necessity: next/jest is only published as CJS.
     "jest.config.cjs",
     // The Claude Code harness. Vendored from everything-claude-code and kept as it
