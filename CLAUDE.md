@@ -2,25 +2,49 @@
 
 # CLAUDE.md
 
-> Replace the bracketed parts with your project's own. Everything else is the template's
-> standing contract and is meant to survive.
-
 ## Project context
 
-**[Project name]** is [one sentence on what it is and who it serves].
+**NeuroTrack** is an open-source research and learning platform for addiction neuroscience,
+behavioural research and experimental quantum computing, serving researchers, students and
+healthcare professionals. It is educational and experimental, never clinical. Read
+`.claude/rules/scientific-integrity.md` before touching any model, analysis or science copy.
+
+Modules: **QuantumLab** (built), **NeuroLab** (next), **BehaviourLab**, **Research Assistant**.
+The roadmap lives in the README.
 
 **Stack**
 
-- Framework: Next.js 16, App Router
+- Framework: Next.js 16, App Router. Middleware is now `src/proxy.ts` (Next 16 rename)
 - Language: TypeScript, strict
-- UI: React 19, Tailwind CSS v4 through PostCSS
-- Data: Supabase, via `@supabase/ssr`
+- UI: React 19, Tailwind CSS v4 through PostCSS, Recharts
+- Data: Supabase (hosted), via `@supabase/ssr`. Schema in `supabase/migrations/`
+- Science API: Python 3.12 FastAPI in `api/`, managed with `uv`. Qiskit 2, Qiskit Aer,
+  qiskit-machine-learning, scikit-learn
 - Package manager: pnpm, pinned in `packageManager`
+
+**How the pieces talk**
+
+Browser → Next.js Server Actions → FastAPI. The browser never calls the API. `src/lib/api/client.ts`
+(server-only) forwards the user's Supabase access token; the API verifies it against the project
+JWKS (`api/app/auth.py`). `NEUROTRACK_API_URL` is server-only. The API contract is FastAPI's
+OpenAPI schema: after changing an API model, run `pnpm api:types` to regenerate
+`src/lib/api/schema.d.ts` and commit both `api/openapi.json` and the types.
 
 **Layout**
 
 | Path | What lives there |
 |---|---|
+| `src/app/(marketing)/` | Landing page |
+| `src/app/(auth)/` | Login, signup and their Server Actions |
+| `src/app/(app)/` | Signed-in labs. The layout calls `requireUser()` |
+| `src/proxy.ts` | Session refresh and the signed-out redirect for lab routes |
+| `src/lib/auth.ts` | `getSessionUser`, `requireUser`, `getAccessToken` (server-only) |
+| `src/lib/api/` | Typed server-only client for the FastAPI service and generated types |
+| `src/lib/quantum/circuit.ts` | Pure circuit model and zod schema. Mirrors the API caps |
+| `src/lib/experiments.ts` | Saves and lists rows in `experiments` (RLS: own rows only) |
+| `api/` | FastAPI service. `uv run pytest`, `uv run ruff check .` |
+| `supabase/migrations/` | SQL schema and RLS. Apply with `supabase db push` |
+| `docs/models/` | Model cards. Every model needs one |
 | `src/app/` | Routes, layouts and pages |
 | `src/lib/` | Pure modules and the Supabase clients |
 | `src/lib/supabase/server.ts` | Server client. Reads cookies through `next/headers` |
@@ -89,7 +113,9 @@ of failures that look like the unit tests broke. **Name unit tests `*.test.ts`.*
 pnpm verify
 ```
 
-That chains lint, typecheck, Jest and Playwright. Do not push if any step fails. Keep the branch
+That chains lint, typecheck, Jest and Playwright. If you touched `api/`, also run
+`cd api && uv run ruff check . && uv run ruff format --check . && uv run pytest`. Do not push if
+any step fails. Keep the branch
 buildable at every commit.
 
 ## Commits

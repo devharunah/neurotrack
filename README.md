@@ -1,69 +1,81 @@
-# claude-nextjs-supabase-template
+# NeuroTrack
 
-A Next.js 16 and Supabase starter that arrives with a working Claude Code setup: nine subagents,
-fifteen slash commands, ten skills, standing rules, and session hooks that survive compaction.
+An open-source research and learning platform that brings together addiction neuroscience,
+behavioural research and experimental quantum computing.
 
-Use it as a GitHub template, or `gh repo create <name> --template devharunah/claude-nextjs-supabase-template`.
+> **Educational and experimental.** NeuroTrack does not diagnose, predict relapse, recommend
+> treatment or measure brain activity. Quantum experiments make no claim of quantum advantage.
 
-## What you get
+| Lab | Status | What it does |
+|---|---|---|
+| **QuantumLab** | ✅ Working | Circuit builder (X, Y, Z, H, CNOT), local Qiskit Aer simulation, noise models, histograms, statevectors, guided Bell/GHZ experiments, quantum-kernel vs classical classifier comparison |
+| **NeuroLab** | Next (M2) | 3D brain explorer, region pages with verified citations, Rescorla-Wagner and TD reward-learning models |
+| **BehaviourLab** | Planned (M3) | Consented observation studies, trend dashboards, association analysis, pseudonymous export. Synthetic data until ethics approval |
+| **Research Assistant** | Planned (M4) | Europe PMC and PubMed search with citation-validated summaries. Works with no paid AI provider |
 
-**The app**
+## Architecture
 
-- Next.js 16, App Router, React 19, TypeScript strict, plus the strictness flags `strict`
-  itself leaves off, and typed routes and typed env vars from `next.config.ts`
-- Tailwind CSS v4 through PostCSS
-- Supabase through `@supabase/ssr`, a server client and a browser client, both behind `requireEnv`
-- Biome for formatting and lint, ESLint for the Next rules
-- Jest for pure modules, Playwright for anything that renders or fetches
+```
+Browser ──► Next.js 16 (Vercel)  ──Server Actions──►  FastAPI (Python 3.12, uv)
+             │  src/proxy.ts: session refresh          │  Qiskit 2 + Aer, scikit-learn
+             │  (app)/ labs, (auth)/ login             │  verifies Supabase JWT via JWKS
+             ▼                                          ▼
+          Supabase: Auth + Postgres (RLS on every table)
+```
 
-**The CI**
-
-Four jobs in `.github/workflows/ci.yml`, sharing one composite setup action: lint, typecheck plus
-production build, unit tests, and E2E gated behind the other three. The Playwright report uploads
-as an artifact on failure.
-
-**The harness**
-
-`.claude/`, vendored from [everything-claude-code](https://github.com/devharunah/everything-claude-code)
-and adapted so it actually runs on this stack and on Windows. Read `.claude/README.md` for what
-changed and why.
+- The browser never calls the API directly. Server Actions forward the user's access token, and
+  the API verifies it against the Supabase JWKS. This means no CORS, and no secrets shared
+  between the two services.
+- The API's OpenAPI schema is the contract. `pnpm api:types` regenerates the TypeScript types, and
+  CI fails if the committed schema is stale.
+- Curated scientific content lives in the repo, reviewed through PRs. The database holds only
+  user-generated data.
 
 ## Getting started
 
+Prerequisites:
+- Node 20+ and pnpm 10.
+- [uv](https://docs.astral.sh/uv/), which installs Python 3.12 for you.
+- A free [Supabase](https://supabase.com) project.
+
 ```bash
 pnpm install
-cp .env.example .env.local
+cd api && uv sync && cd ..
+
+cp .env.example .env.local          # Supabase URL + publishable key, NEUROTRACK_API_URL
+cp api/.env.example api/.env        # SUPABASE_URL
+
+supabase link --project-ref <ref>
+supabase db push                    # applies supabase/migrations
+
+pnpm dev:all                        # Next.js on :3000, API on :8000
 ```
 
-Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, then:
-
-```bash
-pnpm dev
-```
-
-## Then do these four things
-
-1. Fill in the bracketed parts of `CLAUDE.md`. The file is the contract every Claude session reads
-   first, and a template that still says `[Project name]` teaches it nothing.
-2. Rename the project in `package.json`.
-3. Add your Supabase secrets under Settings, Secrets and variables, Actions. The E2E job falls
-   back to a local URL so it stays green until you do.
-4. Decide your deploy target. `ci.yml` has a comment marking where the deploy steps attach.
+API docs: http://127.0.0.1:8000/docs
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `pnpm dev` | Dev server on port 3000 |
-| `pnpm verify` | lint, typecheck, Jest, Playwright. Run it before every push |
-| `pnpm check` | Biome |
-| `pnpm lint:fix` | ESLint and Biome, writing fixes |
-| `pnpm test` | Jest |
-| `pnpm e2e` | Playwright |
-| `pnpm typecheck` | Regenerates route and env types, then runs `tsc --noEmit` |
+| `pnpm dev:all` | Web and API together |
+| `pnpm verify` | Lint, typecheck, Jest, Playwright |
+| `pnpm api:types` | Regenerate `api/openapi.json` and `src/lib/api/schema.d.ts` |
+| `cd api && uv run pytest` | API tests (includes the Bell-state distribution check) |
+
+## Roadmap
+
+1. **M0, Foundation** ✅ Monorepo, auth, RLS schema, typed API bridge, CI, landing page.
+2. **M1, QuantumLab** ✅ Circuits, noise, Bell state, quantum-kernel comparison.
+3. **M2, NeuroLab:** brain explorer (React Three Fiber) and reward-learning models.
+4. **M3, BehaviourLab:** studies, consent, observations, analytics, export.
+5. **M4, Research Assistant:** literature search, citation-grounded summaries.
+6. **M5, Hardening:** API hosting, rate limits, RLS privacy tests, docs.
+
+Read `.claude/rules/scientific-integrity.md` and the model cards in `docs/models/` before
+contributing to any model or analysis.
 
 ## Credit
 
-The Claude Code configuration is MIT licensed work by Affaan Mustafa, from
-[everything-claude-code](https://github.com/affaan-m/everything-claude-code). The Next.js and
-Supabase base follows `Aaron-Douglas/nextjs-supabase-starter`.
+Built on [claude-nextjs-supabase-template](https://github.com/devharunah/claude-nextjs-supabase-template).
+The Claude Code configuration in `.claude/` is MIT-licensed work by Affaan Mustafa, from
+[everything-claude-code](https://github.com/affaan-m/everything-claude-code).
