@@ -9,3 +9,10 @@ test-results/
 playwright-report/
 .playwright/
 next-env.d.ts
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+api/.env
