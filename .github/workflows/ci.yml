@@ -37,14 +37,39 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: api/uv.lock
+      - name: Install
+        run: uv sync --locked
+      - name: Ruff
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Pytest
+        run: uv run pytest -q
+      - name: OpenAPI schema is up to date
+        run: |
+          uv run python -c "import json; from app.main import app; print(json.dumps(app.openapi(), indent=2))" > /tmp/openapi.json
+          diff -u openapi.json /tmp/openapi.json
+
   e2e:
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, test, api]
     env:
       # Optional. The starter page does not read Supabase, so e2e stays green
       # until a project wires these up in Settings -> Secrets and variables.
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      # src/proxy.ts reads both on every request. With no session cookie it never calls Supabase,
+      # so placeholders keep the signed-out flows testable without secrets.
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'ci-placeholder' }}
+      NEUROTRACK_API_URL: http://127.0.0.1:8000
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
