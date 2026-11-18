@@ -131,7 +131,11 @@ function Push-AndPr([string]$m) {
   $wt = Get-Worktree $m
   git -C $wt fetch -q origin
   if (git -C $wt status --porcelain) { git -C $wt stash push -u -m "resume-build autostash" | Out-Null }
-  git -C $wt rebase --onto origin/main $ScaffoldRef 2>$null
+  # Once the first milestone has merged, main already contains the scaffold commits (squashed), so
+  # replay only this milestone's own commits. Before that, the scaffold has to travel with the PR.
+  git -C $wt cat-file -e "origin/main:docs/build/STATUS.md" 2>$null
+  if ($LASTEXITCODE -eq 0) { git -C $wt rebase --onto origin/main $ScaffoldRef 2>$null }
+  else { git -C $wt rebase origin/main 2>$null }
   if ($LASTEXITCODE -ne 0) {
     git -C $wt rebase --abort 2>$null
     git -C $wt rebase origin/main
