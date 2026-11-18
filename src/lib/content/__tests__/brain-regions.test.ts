@@ -1,4 +1,10 @@
-import { BRAIN_REGIONS, formatReference, getBrainRegion } from "../brain-regions";
+import {
+  BRAIN_REGIONS,
+  explorerPositions,
+  formatReference,
+  getBrainRegion,
+  regionSummary,
+} from "../brain-regions";
 
 const DOI = /^10\.\d{4,9}\//;
 
@@ -64,5 +70,40 @@ describe("brain region content", () => {
     expect(ref && formatReference(ref)).toBe(
       "Schultz W (1998). Predictive reward signal of dopamine neurons. Journal of Neurophysiology 80, 1–27.",
     );
+  });
+});
+
+describe("explorer helpers", () => {
+  it("summarises each region with one complete sentence", () => {
+    for (const region of BRAIN_REGIONS) {
+      const summary = regionSummary(region);
+      expect(summary.length).toBeGreaterThan(20);
+      expect(summary).toMatch(/[.!?]$/);
+      expect(region.rewardAndLearning.startsWith(summary)).toBe(true);
+    }
+  });
+
+  it("mirrors bilateral regions and keeps midline regions single", () => {
+    for (const region of BRAIN_REGIONS) {
+      const positions = explorerPositions(region);
+      const [x, y, z] = region.explorer.position;
+      if (x === 0) {
+        expect(positions).toEqual([[0, y, z]]);
+      } else {
+        expect(positions).toEqual([
+          [x, y, z],
+          [-x, y, z],
+        ]);
+      }
+    }
+  });
+
+  it("places every region inside the stylised brain", () => {
+    for (const region of BRAIN_REGIONS) {
+      const [x, y, z] = region.explorer.position;
+      expect(Math.abs(x)).toBeLessThanOrEqual(1.4);
+      expect(Math.abs(y)).toBeLessThanOrEqual(1);
+      expect(Math.abs(z)).toBeLessThanOrEqual(1.6);
+    }
   });
 });

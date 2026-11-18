@@ -335,3 +335,27 @@ export function pubmedUrl(pmid: string): string {
 export function formatReference(ref: Reference): string {
   return `${ref.authors} (${ref.year}). ${ref.title}. ${ref.journal} ${ref.volume}, ${ref.pages}.`;
 }
+
+/** The first sentence of the region's reward-and-learning text: a short summary for the explorer. */
+export function regionSummary(region: BrainRegion): string {
+  const text = region.rewardAndLearning.trim();
+  const match = /^.+?[.!?](?=\s|$)/.exec(text);
+  return match ? match[0] : text;
+}
+
+export type Vec3 = readonly [number, number, number];
+
+/**
+ * Where to draw a region in the explorer. Bilateral structures (any region placed off the
+ * midline) are mirrored into the left hemisphere, so they appear once in each hemisphere;
+ * midline regions appear once.
+ */
+export function explorerPositions(region: BrainRegion): Vec3[] {
+  const [x, y, z] = region.explorer.position;
+  return x === 0
+    ? [[x, y, z]]
+    : [
+        [x, y, z],
+        [-x, y, z],
+      ];
+}

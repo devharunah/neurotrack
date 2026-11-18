@@ -1,21 +1,38 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { ComingSoon } from "@/components/coming-soon";
+import { Disclaimer } from "@/components/disclaimer";
+
+import { BrainExplorer } from "./brain-explorer";
 
 export const metadata: Metadata = { title: "NeuroLab" };
 
 export default function NeuroLabPage() {
   return (
-    <ComingSoon
-      title="NeuroLab"
-      milestone="Milestone 2"
-      summary="Explore the brain regions involved in reward and learning, and experiment with established computational models of reward learning."
-      features={[
-        "Interactive 3D brain: prefrontal cortex, amygdala, nucleus accumbens, basal ganglia, hippocampus, ventral tegmental area",
-        "Region pages: anatomy, function, role in reward learning, cited addiction research",
-        "Reward-learning explorer: Rescorla-Wagner and temporal-difference models with live parameter sliders",
-        "Model cards documenting assumptions, parameters, limitations and references",
-      ]}
-    />
+    <div className="max-w-7xl space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">NeuroLab</h1>
+          <p className="mt-2 max-w-3xl leading-7 text-ink-soft">
+            Explore six brain regions that research on reward, learning and addiction returns to
+            again and again. Select a region for a short summary, then open its page for the
+            anatomy, its role in learning and the reviews the text is drawn from.
+          </p>
+        </div>
+        <Link
+          href="/neuro/reward-learning"
+          className="rounded-lg bg-neuro px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+        >
+          Open the reward-learning simulator
+        </Link>
+      </header>
+
+      <BrainExplorer />
+
+      <Disclaimer>
+        The 3D brain is a simplified teaching model, not an anatomical atlas or a scan. Region
+        summaries describe research findings and say nothing about any individual.
+      </Disclaimer>
+    </div>
   );
 }
