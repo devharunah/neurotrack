@@ -124,6 +124,8 @@ async def get_with_retries(
 # ---------------------------------------------------------------------------------------------
 
 _TAG = re.compile(r"<[^>]+>")
+# Europe PMC marks structured-abstract sections as <h4>Methods</h4>; keep them as "Methods: ".
+_SECTION_HEADING = re.compile(r"<h[1-6][^>]*>\s*([^<]{1,60}?)\s*:?\s*</h[1-6]>", re.IGNORECASE)
 _DOI_PREFIX = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", re.IGNORECASE)
 _YEAR = re.compile(r"\b(1[89]\d{2}|20\d{2})\b")
 
@@ -191,6 +193,12 @@ def _europepmc_journal(record: Mapping[str, Any]) -> str | None:
     return None
 
 
+def _europepmc_abstract(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    return clean_text(_SECTION_HEADING.sub(r" \1: ", value))
+
+
 def parse_europepmc(payload: Mapping[str, Any]) -> list[Reference]:
     """Parse a Europe PMC ``search`` response (``format=json``, ``resultType=core``)."""
     result_list = payload.get("resultList")
@@ -226,7 +234,7 @@ def parse_europepmc(payload: Mapping[str, Any]) -> list[Reference]:
                 authors=_europepmc_authors(record),
                 journal=_europepmc_journal(record),
                 year=_year(record.get("pubYear")) or _year(info_year),
-                abstract=clean_text(record.get("abstractText")),
+                abstract=_europepmc_abstract(record.get("abstractText")),
                 publication_types=pub_types,
                 url=europepmc_url(record_source, record_id),
                 evidence=evidence_label(pub_types),

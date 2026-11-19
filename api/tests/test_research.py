@@ -135,7 +135,7 @@ def test_parse_europepmc_strips_markup_and_tolerates_missing_fields() -> None:
     }
     [ref] = parse_europepmc(payload)
     assert ref.title == "In vivo imaging & reward"
-    assert ref.abstract == "Background Text here bold."
+    assert ref.abstract == "Background: Text here bold."
     assert ref.authors == ["Doe J", "Roe R"]
     assert ref.publication_types == [] and ref.evidence == "other"
     assert parse_europepmc({}) == []
