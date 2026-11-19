@@ -147,6 +147,98 @@
           }
         ]
       }
+    },
+    "/behaviour/associations": {
+      "post": {
+        "tags": [
+          "behaviour"
+        ],
+        "summary": "Post Associations",
+        "operationId": "post_associations_behaviour_associations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssociationsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssociationsResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/behaviour/summary": {
+      "post": {
+        "tags": [
+          "behaviour"
+        ],
+        "summary": "Post Summary",
+        "operationId": "post_summary_behaviour_summary_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RowsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -179,6 +271,274 @@
         ],
         "title": "Amplitude"
       },
+      "Association": {
+        "properties": {
+          "pair": {
+            "type": "string",
+            "enum": [
+              "stress_craving",
+              "sleep_craving",
+              "mood_craving",
+              "time_of_day_craving"
+            ],
+            "title": "Pair"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "spearman",
+              "kruskal_wallis"
+            ],
+            "title": "Method"
+          },
+          "statistic": {
+            "type": "string",
+            "enum": [
+              "rho",
+              "epsilon_squared"
+            ],
+            "title": "Statistic"
+          },
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "sufficient": {
+            "type": "boolean",
+            "title": "Sufficient"
+          },
+          "estimate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimate"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "p_value_holm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value Holm",
+            "description": "Holm-adjusted across the pairs in this response that had enough data."
+          },
+          "strength": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "negligible",
+                  "weak",
+                  "moderate",
+                  "strong"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strength"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "positive",
+                  "negative"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "interpretation": {
+            "type": "string",
+            "title": "Interpretation"
+          },
+          "groups": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TimeBucket"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Groups"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair",
+          "label",
+          "method",
+          "statistic",
+          "n",
+          "sufficient",
+          "estimate",
+          "ci_low",
+          "ci_high",
+          "p_value",
+          "p_value_holm",
+          "strength",
+          "direction",
+          "interpretation"
+        ],
+        "title": "Association"
+      },
+      "AssociationsRequest": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationRow"
+            },
+            "type": "array",
+            "maxItems": 20000,
+            "title": "Rows"
+          },
+          "synthetic": {
+            "type": "boolean",
+            "title": "Synthetic",
+            "description": "Whether the rows are synthetic. Echoed back so it stays labelled.",
+            "default": true
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 4294967295.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 20261120
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "title": "AssociationsRequest"
+      },
+      "AssociationsResult": {
+        "properties": {
+          "associations": {
+            "items": {
+              "$ref": "#/components/schemas/Association"
+            },
+            "type": "array",
+            "title": "Associations"
+          },
+          "n_rows": {
+            "type": "integer",
+            "title": "N Rows"
+          },
+          "n_participants": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Participants"
+          },
+          "bootstrap_unit": {
+            "type": "string",
+            "enum": [
+              "participant",
+              "observation"
+            ],
+            "title": "Bootstrap Unit"
+          },
+          "resamples": {
+            "type": "integer",
+            "title": "Resamples"
+          },
+          "confidence_level": {
+            "type": "number",
+            "title": "Confidence Level"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "min_n": {
+            "type": "integer",
+            "title": "Min N"
+          },
+          "synthetic": {
+            "type": "boolean",
+            "title": "Synthetic"
+          },
+          "notice": {
+            "type": "string",
+            "title": "Notice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "associations",
+          "n_rows",
+          "n_participants",
+          "bootstrap_unit",
+          "resamples",
+          "confidence_level",
+          "seed",
+          "min_n",
+          "synthetic",
+          "notice"
+        ],
+        "title": "AssociationsResult"
+      },
       "CircuitSpec": {
         "properties": {
           "num_qubits": {
@@ -201,6 +561,124 @@
           "num_qubits"
         ],
         "title": "CircuitSpec"
+      },
+      "FieldSummary": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "mood",
+              "stress",
+              "sleep_quality",
+              "craving_intensity"
+            ],
+            "title": "Field"
+          },
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "missing": {
+            "type": "integer",
+            "title": "Missing"
+          },
+          "missing_fraction": {
+            "type": "number",
+            "title": "Missing Fraction"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "sd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sd"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "q1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q1"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "q3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q3"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "n",
+          "missing",
+          "missing_fraction",
+          "mean",
+          "sd",
+          "min",
+          "q1",
+          "median",
+          "q3",
+          "max"
+        ],
+        "title": "FieldSummary"
       },
       "Gate": {
         "properties": {
@@ -326,6 +804,88 @@
         "title": "NoiseConfig",
         "description": "Simple, documented noise: depolarizing gate errors plus symmetric readout error."
       },
+      "ObservationRow": {
+        "properties": {
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Observed At",
+            "description": "When the observation was made. Send the local wall time with its UTC offset (for example 2026-11-20T19:30:00+03:00); time-of-day buckets use the hour as given."
+          },
+          "participant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Participant",
+            "description": "Pseudonymous participant key. When present, the bootstrap resamples participants rather than single observations, which respects repeated measures."
+          },
+          "mood": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mood"
+          },
+          "stress": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stress"
+          },
+          "sleep_quality": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sleep Quality"
+          },
+          "craving_intensity": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Craving Intensity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "observed_at"
+        ],
+        "title": "ObservationRow",
+        "description": "One self-reported observation. Scores are 0-10; null means not answered."
+      },
       "Preset": {
         "properties": {
           "id": {
@@ -429,6 +989,29 @@
           "models"
         ],
         "title": "QmlCompareResult"
+      },
+      "RowsRequest": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationRow"
+            },
+            "type": "array",
+            "maxItems": 20000,
+            "title": "Rows"
+          },
+          "synthetic": {
+            "type": "boolean",
+            "title": "Synthetic",
+            "description": "Whether the rows are synthetic. Echoed back so it stays labelled.",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "title": "RowsRequest"
       },
       "RunRequest": {
         "properties": {
@@ -550,6 +1133,85 @@
           "elapsed_ms"
         ],
         "title": "RunResult"
+      },
+      "SummaryResult": {
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FieldSummary"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "n_rows": {
+            "type": "integer",
+            "title": "N Rows"
+          },
+          "synthetic": {
+            "type": "boolean",
+            "title": "Synthetic"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fields",
+          "n_rows",
+          "synthetic"
+        ],
+        "title": "SummaryResult"
+      },
+      "TimeBucket": {
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "enum": [
+              "night",
+              "morning",
+              "afternoon",
+              "evening"
+            ],
+            "title": "Bucket"
+          },
+          "hours": {
+            "type": "string",
+            "title": "Hours"
+          },
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bucket",
+          "hours",
+          "n",
+          "mean",
+          "median"
+        ],
+        "title": "TimeBucket"
       },
       "ValidationError": {
         "properties": {

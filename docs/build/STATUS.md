@@ -53,7 +53,8 @@ commits to it.
    `api/openapi.json` and `src/lib/api/schema.d.ts`. Merge conflicts in those two files are
    expected; integration regenerates them.
 5. **Checks before every commit that claims a box:**
-   - Web: `pnpm lint`, `pnpm typecheck` and `pnpm test`.
+   - Web: `pnpm check` (Biome format + imports, which CI runs), `pnpm lint`, `pnpm typecheck` and
+     `pnpm test`. Run `pnpm biome check --write .` to auto-fix formatting.
    - API (if you touched `api/`): `cd api && uv run ruff check . && uv run ruff format --check . && uv run pytest -q`.
    - Run `pnpm build` at least once before you finish.
 

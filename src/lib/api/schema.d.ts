@@ -72,6 +72,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/behaviour/associations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Associations */
+        post: operations["post_associations_behaviour_associations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/behaviour/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Summary */
+        post: operations["post_summary_behaviour_summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -87,12 +121,127 @@ export interface components {
             /** Probability */
             probability: number;
         };
+        /** Association */
+        Association: {
+            /**
+             * Pair
+             * @enum {string}
+             */
+            pair: "stress_craving" | "sleep_craving" | "mood_craving" | "time_of_day_craving";
+            /** Label */
+            label: string;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "spearman" | "kruskal_wallis";
+            /**
+             * Statistic
+             * @enum {string}
+             */
+            statistic: "rho" | "epsilon_squared";
+            /** N */
+            n: number;
+            /** Sufficient */
+            sufficient: boolean;
+            /** Estimate */
+            estimate: number | null;
+            /** Ci Low */
+            ci_low: number | null;
+            /** Ci High */
+            ci_high: number | null;
+            /** P Value */
+            p_value: number | null;
+            /**
+             * P Value Holm
+             * @description Holm-adjusted across the pairs in this response that had enough data.
+             */
+            p_value_holm: number | null;
+            /** Strength */
+            strength: ("negligible" | "weak" | "moderate" | "strong") | null;
+            /** Direction */
+            direction: ("positive" | "negative") | null;
+            /** Interpretation */
+            interpretation: string;
+            /** Groups */
+            groups?: components["schemas"]["TimeBucket"][] | null;
+        };
+        /** AssociationsRequest */
+        AssociationsRequest: {
+            /** Rows */
+            rows: components["schemas"]["ObservationRow"][];
+            /**
+             * Synthetic
+             * @description Whether the rows are synthetic. Echoed back so it stays labelled.
+             * @default true
+             */
+            synthetic: boolean;
+            /**
+             * Seed
+             * @default 20261120
+             */
+            seed: number;
+        };
+        /** AssociationsResult */
+        AssociationsResult: {
+            /** Associations */
+            associations: components["schemas"]["Association"][];
+            /** N Rows */
+            n_rows: number;
+            /** N Participants */
+            n_participants: number | null;
+            /**
+             * Bootstrap Unit
+             * @enum {string}
+             */
+            bootstrap_unit: "participant" | "observation";
+            /** Resamples */
+            resamples: number;
+            /** Confidence Level */
+            confidence_level: number;
+            /** Seed */
+            seed: number;
+            /** Min N */
+            min_n: number;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Notice */
+            notice: string;
+        };
         /** CircuitSpec */
         CircuitSpec: {
             /** Num Qubits */
             num_qubits: number;
             /** Gates */
             gates?: components["schemas"]["Gate"][];
+        };
+        /** FieldSummary */
+        FieldSummary: {
+            /**
+             * Field
+             * @enum {string}
+             */
+            field: "mood" | "stress" | "sleep_quality" | "craving_intensity";
+            /** N */
+            n: number;
+            /** Missing */
+            missing: number;
+            /** Missing Fraction */
+            missing_fraction: number;
+            /** Mean */
+            mean: number | null;
+            /** Sd */
+            sd: number | null;
+            /** Min */
+            min: number | null;
+            /** Q1 */
+            q1: number | null;
+            /** Median */
+            median: number | null;
+            /** Q3 */
+            q3: number | null;
+            /** Max */
+            max: number | null;
         };
         /** Gate */
         Gate: {
@@ -148,6 +297,31 @@ export interface components {
              * @default 0
              */
             readout: number;
+        };
+        /**
+         * ObservationRow
+         * @description One self-reported observation. Scores are 0-10; null means not answered.
+         */
+        ObservationRow: {
+            /**
+             * Observed At
+             * Format: date-time
+             * @description When the observation was made. Send the local wall time with its UTC offset (for example 2026-11-20T19:30:00+03:00); time-of-day buckets use the hour as given.
+             */
+            observed_at: string;
+            /**
+             * Participant
+             * @description Pseudonymous participant key. When present, the bootstrap resamples participants rather than single observations, which respects repeated measures.
+             */
+            participant?: string | null;
+            /** Mood */
+            mood?: number | null;
+            /** Stress */
+            stress?: number | null;
+            /** Sleep Quality */
+            sleep_quality?: number | null;
+            /** Craving Intensity */
+            craving_intensity?: number | null;
         };
         /** Preset */
         Preset: {
@@ -207,6 +381,17 @@ export interface components {
              */
             caveat: string;
         };
+        /** RowsRequest */
+        RowsRequest: {
+            /** Rows */
+            rows: components["schemas"]["ObservationRow"][];
+            /**
+             * Synthetic
+             * @description Whether the rows are synthetic. Echoed back so it stays labelled.
+             * @default true
+             */
+            synthetic: boolean;
+        };
         /** RunRequest */
         RunRequest: {
             /** Num Qubits */
@@ -249,6 +434,31 @@ export interface components {
              * @default Qiskit little-endian: rightmost bit is qubit 0
              */
             bit_order: string;
+        };
+        /** SummaryResult */
+        SummaryResult: {
+            /** Fields */
+            fields: components["schemas"]["FieldSummary"][];
+            /** N Rows */
+            n_rows: number;
+            /** Synthetic */
+            synthetic: boolean;
+        };
+        /** TimeBucket */
+        TimeBucket: {
+            /**
+             * Bucket
+             * @enum {string}
+             */
+            bucket: "night" | "morning" | "afternoon" | "evening";
+            /** Hours */
+            hours: string;
+            /** N */
+            n: number;
+            /** Mean */
+            mean: number | null;
+            /** Median */
+            median: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -367,6 +577,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QmlCompareResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_associations_behaviour_associations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssociationsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssociationsResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_summary_behaviour_summary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RowsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryResult"];
                 };
             };
             /** @description Validation Error */

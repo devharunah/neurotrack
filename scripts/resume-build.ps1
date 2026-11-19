@@ -193,6 +193,7 @@ function Test-E2e([string]$m) {
       [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], "Process")
     }
     Push-Location $wt
+    $env:E2E_PORT = "3100"  # fresh build on its own port; never reuse a stray dev server
     try { $out = (pnpm e2e 2>&1 | Out-String); $ok = ($LASTEXITCODE -eq 0) } finally { Pop-Location }
     $out | Set-Content -Encoding utf8 (Join-Path $LogDir "$m-e2e-$(Get-Date -Format yyyyMMdd-HHmmss).log")
     return @{ ok = $ok; out = $out }
