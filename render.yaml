@@ -1,0 +1,41 @@
+# Render Blueprint for the NeuroTrack API: one documented deployment option (see docs/deploy.md).
+# Nothing here is applied until someone connects the repository in the Render dashboard
+# (New > Blueprint). The web app is deployed separately (Vercel); the database is Supabase.
+#
+# Caveats on the free instance type: it sleeps after a period without traffic, so the first
+# request after a quiet spell is slow (Qiskit imports take a while), and its memory is limited,
+# which bounds QML comparisons and WEB_CONCURRENCY. Check Render's current limits and pricing
+# before choosing a plan; they change, and this file deliberately quotes no numbers.
+services:
+  - type: web
+    name: neurotrack-api
+    runtime: docker
+    # The image is built from api/ only.
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    # Pick the region closest to your users and your Supabase project.
+    region: frankfurt
+    plan: free
+    branch: main
+    # Deploy deliberately (dashboard or deploy hook) after CI is green and migrations are applied.
+    autoDeploy: false
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      # Your Supabase project URL, e.g. https://abcd.supabase.co (the API fetches its JWKS).
+      - key: SUPABASE_URL
+        sync: false
+      # The Render host name of this service, e.g. neurotrack-api.onrender.com (comma-separated
+      # if you add a custom domain). Required in production; "*" is refused.
+      - key: ALLOWED_HOSTS
+        sync: false
+      # Render's proxy sets X-Forwarded-For, so per-IP rate limiting uses the real client IP.
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
+      # Rate limits are per worker; keep 1 on small instances.
+      - key: WEB_CONCURRENCY
+        value: "1"
+      # Optional: raises the PubMed E-utilities rate limit for the Research Assistant.
+      - key: NCBI_API_KEY
+        sync: false
