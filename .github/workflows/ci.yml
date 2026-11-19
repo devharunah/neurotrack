@@ -59,6 +59,63 @@ jobs:
           uv run python -c "import json; from app.main import app; print(json.dumps(app.openapi(), indent=2))" > /tmp/openapi.json
           diff -u openapi.json /tmp/openapi.json
 
+  # Builds the API image exactly as a platform would, then starts it and waits for the
+  # container's own HEALTHCHECK to pass. Nothing is pushed anywhere.
+  api-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: api
+          push: false
+          load: true
+          tags: neurotrack-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Start the container and wait for it to be healthy
+        run: |
+          docker run -d --name api -p 8000:8000             -e ALLOWED_HOSTS=localhost,127.0.0.1 neurotrack-api:ci
+          for _ in $(seq 1 30); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' api)
+            echo "health: $status"
+            if [ "$status" = "healthy" ]; then
+              curl -fsS http://127.0.0.1:8000/health
+              docker exec api id -u | grep -qv '^0$'
+              exit 0
+            fi
+            sleep 5
+          done
+          docker logs api
+          exit 1
+
+  # Dependency audit. Non-blocking for now: advisories in transitive dependencies (Qiskit's
+  # scientific stack especially) can take a while to get fixed upstream.
+  # TODO(security): make this blocking once the baseline is clean, and triage findings weekly
+  # alongside the Dependabot PRs.
+  security:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: pnpm audit (production dependencies)
+        run: pnpm audit --prod --audit-level high
+      - uses: astral-sh/setup-uv@v6
+        if: ${{ !cancelled() }}
+        with:
+          enable-cache: true
+          cache-dependency-glob: api/uv.lock
+      # Runs even when pnpm audit found something, so both reports always appear.
+      - name: pip-audit (API runtime dependencies)
+        if: ${{ !cancelled() }}
+        working-directory: api
+        run: |
+          uv export --locked --no-dev --no-hashes --no-emit-project --format requirements-txt             > /tmp/api-requirements.txt
+          uvx pip-audit --strict --requirement /tmp/api-requirements.txt
+
   e2e:
     runs-on: ubuntu-latest
     needs: [lint, typecheck, test, api]
