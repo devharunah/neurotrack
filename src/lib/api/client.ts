@@ -9,6 +9,12 @@ export type RunResult = components["schemas"]["RunResult"];
 export type Preset = components["schemas"]["Preset"];
 export type QmlCompareRequest = components["schemas"]["QmlCompareRequest"];
 export type QmlCompareResult = components["schemas"]["QmlCompareResult"];
+export type BehaviourRowsRequest = components["schemas"]["RowsRequest"];
+export type BehaviourObservationRow = components["schemas"]["ObservationRow"];
+export type AssociationsRequest = components["schemas"]["AssociationsRequest"];
+export type AssociationsResult = components["schemas"]["AssociationsResult"];
+export type Association = components["schemas"]["Association"];
+export type BehaviourSummary = components["schemas"]["SummaryResult"];
 
 export class ApiError extends Error {
   constructor(
@@ -80,4 +86,11 @@ export const api = {
     call<RunResult>("/quantum/run", { method: "POST", body: JSON.stringify(body) }),
   qmlCompare: (body: QmlCompareRequest) =>
     call<QmlCompareResult>("/quantum/qml/compare", { method: "POST", body: JSON.stringify(body) }),
+  behaviourAssociations: (body: AssociationsRequest) =>
+    call<AssociationsResult>("/behaviour/associations", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  behaviourSummary: (body: BehaviourRowsRequest) =>
+    call<BehaviourSummary>("/behaviour/summary", { method: "POST", body: JSON.stringify(body) }),
 };

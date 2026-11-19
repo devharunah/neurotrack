@@ -244,3 +244,7 @@ export function computeDashboard(input: {
     adherence,
   };
 }
+
+/** Shown above every association result, whatever the API returns. */
+export const ASSOCIATIONS_NOTICE =
+  "Associations, not causes. These are rank-based associations in observational, self-reported data. They do not show that one factor causes another: unmeasured factors can produce the same pattern, several pairs are tested at once, and self-report is imperfect. They describe the study group as a whole and must not be used to predict or diagnose anything about an individual.";
