@@ -122,15 +122,31 @@ placeholders, overreaching ranges) and checks exactly which sentences survive.
 
 ## Storage
 
-- `literature_references` is a shared, append-only cache of public bibliographic data. PMID and
-  DOI are each unique when present (NULLs never collide), and at least one is required. A
-  generated `tsvector` (title weight A, abstract weight B, English configuration) with a GIN index
-  powers **Search my library**, which uses PostgREST `textSearch` in `websearch` mode (quotes,
-  `or`, `-word`). Signed-in users can select and insert; nobody can update or delete.
-  `cache_literature_references(jsonb)` inserts a batch with `on conflict do nothing` (covering
-  both unique keys) and returns the cached id of every record, new or existing.
+- `literature_references` is an append-only cache of public bibliographic data, **scoped per
+  user**: every row records `inserted_by` (always `auth.uid()`), and RLS lets a user select and
+  insert only their own rows. Nobody can update or delete. PMID and DOI are each unique per user
+  when present (NULLs never collide), and at least one is required. A generated `tsvector` (title
+  weight A, abstract weight B, English configuration) with a GIN index powers **Search my
+  library**, which uses PostgREST `textSearch` in `websearch` mode (quotes, `or`, `-word`) over
+  the references the user's own searches and questions retrieved.
+  `cache_literature_references(jsonb)` (security invoker) inserts a batch with
+  `on conflict do nothing` (covering both unique keys) and returns the cached id of every record,
+  new or existing.
+- **Why not one cache shared by everyone.** Cache rows are written with the signed-in user's own
+  token, so the database cannot tell a record the web app copied from the API apart from one a
+  user typed by calling PostgREST directly. A shared cache would let any signed-in user plant a
+  fabricated "reference", or a fake title and abstract under a *real* PMID or DOI (which would
+  then win every later insert of that identifier), and other users would see it in their library
+  and saved list. Scoping rows per user means a user can only ever mislead themselves. The cost is
+  some duplicated public metadata across users, which is small. A shared cache would need a
+  trusted writer (for example the API re-fetching each record from the source with a service
+  credential), which NeuroTrack does not have.
 - `saved_references` (`note` up to 2000 characters) and `research_queries` are private: RLS limits
-  every operation to the owner's rows. Only the note of a saved reference can be changed.
+  every operation to the owner's rows. A reference can be saved only if it is one of the user's
+  own cached rows (a foreign key alone would accept another user's row id). Only the note of a
+  saved reference can be changed.
+- What the user sees as a search result or answer source always comes from the API response for
+  that request, not from the cache; the cache only supplies the id used for saving.
 - Caching never blocks a search. If the cache is unavailable, results are still shown and saving
   is disabled with a message.
 

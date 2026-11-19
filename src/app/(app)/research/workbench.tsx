@@ -40,7 +40,7 @@ const MODES: { id: ResearchMode; label: string; hint: string }[] = [
   {
     id: "search",
     label: "Search literature",
-    hint: "Search Europe PMC and PubMed. Results are added to the shared library cache.",
+    hint: "Search Europe PMC and PubMed. Results are added to your library.",
   },
   {
     id: "answer",
@@ -50,7 +50,7 @@ const MODES: { id: ResearchMode; label: string; hint: string }[] = [
   {
     id: "library",
     label: "Search my library",
-    hint: "Full-text search over every reference already cached by NeuroTrack users.",
+    hint: "Full-text search over every reference your own searches and questions have retrieved.",
   },
 ];
 
@@ -391,10 +391,10 @@ function Results({ outcome }: { outcome: Outcome }) {
         </h2>
         {references.length === 0 ? (
           <EmptyState>
-            Nothing in the library matches. The library only holds references that someone has
-            already found through a literature search, so try “Search literature” first. You can use
-            quotes for phrases, <code>or</code> between alternatives and <code>-word</code> to
-            exclude a word.
+            Nothing in the library matches. The library only holds references that you have already
+            found through a literature search, so try “Search literature” first. You can use quotes
+            for phrases, <code>or</code> between alternatives and <code>-word</code> to exclude a
+            word.
           </EmptyState>
         ) : (
           <ReferenceList references={references} />

@@ -44,7 +44,7 @@ export interface SavedState {
   note: string;
 }
 
-/** A reference plus its row in the shared cache (null if it could not be cached) and save state. */
+/** A reference plus its row in the user's own cache (null if it could not be cached) and save state. */
 export interface ReferenceView extends LiteratureReference {
   cacheId: string | null;
   saved: SavedState | null;
@@ -72,6 +72,6 @@ export interface CitedAnswer {
 export interface SearchOutcome {
   references: ReferenceView[];
   failedSources: LiteratureSource[];
-  /** Set when results could not be added to the shared cache, so saving is unavailable. */
+  /** Set when results could not be added to the cache, so saving is unavailable. */
   cacheWarning: string | null;
 }

@@ -145,7 +145,7 @@ export async function askQuestionAction(raw: unknown): Promise<ActionResult<Cite
   };
 }
 
-/** Full-text search over the shared cache (Postgres FTS on title + abstract). */
+/** Full-text search over the user's own cached references (Postgres FTS; RLS scopes it). */
 export async function searchLibraryAction(raw: unknown): Promise<ActionResult<ReferenceView[]>> {
   if (!(await getSessionUser())) {
     return NOT_SIGNED_IN;

@@ -24,7 +24,7 @@ export const CACHE_UNAVAILABLE =
   "Results could not be added to your library cache, so saving is unavailable for now.";
 
 /**
- * Adds references to the shared cache and attaches each one's cache id and the user's save state.
+ * Adds references to the user's own cache (RLS: rows are per user) and attaches each one's cache id and the user's save state.
  * Caching never blocks results: on any database problem the references come back unsaved-able
  * with a warning instead.
  */
