@@ -17,11 +17,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <p className="hidden truncate text-xs text-muted md:mt-1 md:block">{user.email}</p>
         </div>
         <NavLinks />
-        <form action="/auth/signout" method="post" className="px-4 pb-4 md:absolute md:bottom-0">
-          <button type="submit" className="text-sm text-ink-soft hover:text-ink">
-            Sign out
-          </button>
-        </form>
+        <div className="flex items-center gap-4 px-4 pb-4 md:absolute md:bottom-0">
+          <Link href="/settings" className="text-sm text-ink-soft hover:text-ink">
+            Settings
+          </Link>
+          <form action="/auth/signout" method="post">
+            <button type="submit" className="text-sm text-ink-soft hover:text-ink">
+              Sign out
+            </button>
+          </form>
+        </div>
       </aside>
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8">{children}</main>
     </div>

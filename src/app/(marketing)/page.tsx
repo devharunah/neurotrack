@@ -146,6 +146,14 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-2 px-4 py-6 text-sm text-muted sm:px-6">
           <span>NeuroTrack: exploring the science behind the brain and human behaviour.</span>
           <span>MIT licensed · Runs locally · No paid services required</span>
+          <nav aria-label="Legal" className="flex gap-4">
+            <Link href="/privacy" className="hover:text-ink">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-ink">
+              Terms
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>
