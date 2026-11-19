@@ -7,6 +7,7 @@ actually return.
 
 import asyncio
 import json
+import time
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
@@ -681,3 +682,26 @@ def test_rate_limiter_queue_is_bounded() -> None:
     assert waits[0] == pytest.approx(0, abs=0.05) and waits[-1] == pytest.approx(1, abs=0.05)
     with pytest.raises(RateLimitBusyError):
         limiter.reserve()  # the next slot is more than 1 s away: refuse, do not queue
+
+
+def test_a_hung_source_is_reported_failed_and_the_other_still_returns() -> None:
+    """One upstream that never answers must not hold back the other source's results."""
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "www.ebi.ac.uk":
+            await asyncio.sleep(5)  # far beyond the deadline below
+        return default_handler(request)
+
+    settings = Settings(
+        _env_file=None, research_source_deadline_s=1.5
+    )  # PubMed needs ~0.4 s: NCBI spacing
+    client = make_client(handler, settings)
+    started = time.perf_counter()
+    response = client.get("/research/search", params={"q": "dopamine", "source": "all"})
+    elapsed = time.perf_counter() - started
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["failed_sources"] == ["europepmc"]
+    assert body["references"], "PubMed results should still be returned"
+    assert elapsed < 4  # bounded by the deadline, not the 5 s hang

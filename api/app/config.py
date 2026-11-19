@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     ollama_model: str = "llama3.2"
     # Seconds to wait for one upstream literature request before giving up.
     research_timeout_s: float = 15.0
+    # Overall budget for one source in one search, retries included. A source that misses it is
+    # reported in `failed_sources`, so a hung upstream cannot hold back the other source's results.
+    research_source_deadline_s: float = Field(default=12.0, gt=0)
     # Seconds to wait for an Ollama completion (local models can be slow).
     ollama_timeout_s: float = 60.0
 

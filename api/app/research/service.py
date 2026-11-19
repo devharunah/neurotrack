@@ -60,13 +60,18 @@ class LiteratureService:
 
     async def search(self, query: str, source: SourceFilter, limit: int) -> SearchResult:
         clients = self._clients(source)
+        deadline = self.settings.research_source_deadline_s
         outcomes = await asyncio.gather(
-            *(client.search(query, limit) for client in clients.values()), return_exceptions=True
+            *(
+                asyncio.wait_for(client.search(query, limit), deadline)
+                for client in clients.values()
+            ),
+            return_exceptions=True,
         )
         lists: list[list[Reference]] = []
         failed: list[SourceName] = []
         for name, outcome in zip(clients, outcomes, strict=True):
-            if isinstance(outcome, UpstreamError):
+            if isinstance(outcome, UpstreamError | TimeoutError):
                 failed.append(name)
             elif isinstance(outcome, BaseException):
                 raise outcome
