@@ -14,6 +14,18 @@ class Settings(BaseSettings):
     # Audience claim Supabase puts on user access tokens.
     supabase_jwt_audience: str = "authenticated"
 
+    # Research Assistant (M4). All optional: literature search works with none of them set.
+    # An NCBI E-utilities key raises the PubMed rate limit from 3 to 10 requests per second.
+    ncbi_api_key: str | None = None
+    # Base URL of a local Ollama server, e.g. http://127.0.0.1:11434. Unset means no LLM is used
+    # and answers are built extractively from the retrieved abstracts.
+    ollama_url: str | None = None
+    ollama_model: str = "llama3.2"
+    # Seconds to wait for one upstream literature request before giving up.
+    research_timeout_s: float = 15.0
+    # Seconds to wait for an Ollama completion (local models can be slow).
+    ollama_timeout_s: float = 60.0
+
 
 @lru_cache
 def get_settings() -> Settings:

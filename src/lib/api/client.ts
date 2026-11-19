@@ -15,6 +15,14 @@ export type AssociationsRequest = components["schemas"]["AssociationsRequest"];
 export type AssociationsResult = components["schemas"]["AssociationsResult"];
 export type Association = components["schemas"]["Association"];
 export type BehaviourSummary = components["schemas"]["SummaryResult"];
+export type Reference = components["schemas"]["Reference"];
+export type EvidenceLabel = Reference["evidence"];
+export type LiteratureSourceName = Reference["source"];
+export type LiteratureSearchResult = components["schemas"]["SearchResult"];
+export type AnswerRequest = components["schemas"]["AnswerRequest"];
+export type AnswerResult = components["schemas"]["AnswerResult"];
+export type AnswerSentence = components["schemas"]["AnswerSentence"];
+export type LiteratureSourceFilter = "all" | LiteratureSourceName;
 
 export class ApiError extends Error {
   constructor(
@@ -93,4 +101,14 @@ export const api = {
     }),
   behaviourSummary: (body: BehaviourRowsRequest) =>
     call<BehaviourSummary>("/behaviour/summary", { method: "POST", body: JSON.stringify(body) }),
+  researchSearch: (query: { q: string; source: LiteratureSourceFilter; limit: number }) =>
+    call<LiteratureSearchResult>(
+      `/research/search?${new URLSearchParams({
+        q: query.q,
+        source: query.source,
+        limit: String(query.limit),
+      }).toString()}`,
+    ),
+  researchAnswer: (body: AnswerRequest) =>
+    call<AnswerResult>("/research/answer", { method: "POST", body: JSON.stringify(body) }),
 };
