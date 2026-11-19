@@ -325,15 +325,25 @@ create trigger studies_guard_synthetic_switch
   before update on public.studies
   for each row execute function public.studies_guard_synthetic_switch();
 
--- A participant's synthetic flag always matches the study at the time it is created.
+-- A participant's synthetic flag always matches the study at the time it is created. The share
+-- lock conflicts with the row lock an UPDATE of the study takes, so a concurrent switch to real
+-- data either waits for this insert (and its guard then sees the new participant) or finishes
+-- first (and this check sees the new flag). A foreign-key check alone takes only a key-share
+-- lock, which would let synthetic participants slip into a study that just became real.
 create function public.participants_match_study()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  study_synthetic boolean;
 begin
-  if new.synthetic is distinct from (select s.synthetic from public.studies s where s.id = new.study_id) then
+  select s.synthetic into study_synthetic
+  from public.studies s
+  where s.id = new.study_id
+  for share;
+  if new.synthetic is distinct from study_synthetic then
     raise exception using
       errcode = 'check_violation',
       message = 'A participant must be synthetic exactly when the study is synthetic.';
