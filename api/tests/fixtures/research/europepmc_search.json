@@ -1,0 +1,97 @@
+{
+  "version": "6.9",
+  "hitCount": 2,
+  "nextCursorMark": "AoIIQAAAACk3OTk0NTc0Mw==",
+  "request": {
+    "queryString": "reward prediction error",
+    "resultType": "CORE",
+    "cursorMark": "*",
+    "pageSize": 2,
+    "sort": "",
+    "synonym": false
+  },
+  "resultList": {
+    "result": [
+      {
+        "id": "27069377",
+        "source": "MED",
+        "pmid": "27069377",
+        "pmcid": "PMC4826767",
+        "doi": "10.31887/dcns.2016.18.1/wschultz",
+        "title": "Dopamine reward prediction error coding.",
+        "authorString": "Schultz W.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Schultz W",
+              "firstName": "Wolfram",
+              "lastName": "Schultz",
+              "initials": "W"
+            }
+          ]
+        },
+        "journalInfo": {
+          "issue": "1",
+          "volume": "18",
+          "yearOfPublication": 2016,
+          "journal": {
+            "title": "Dialogues in clinical neuroscience",
+            "medlineAbbreviation": "Dialogues Clin Neurosci",
+            "isoabbreviation": "Dialogues Clin Neurosci"
+          }
+        },
+        "pubYear": "2016",
+        "abstractText": "Reward prediction errors consist of the differences between received and predicted rewards. They are crucial for basic forms of learning about rewards and make us strive for more rewards-an evolutionary beneficial trait. Most dopamine neurons in the midbrain of humans, monkeys, and rodents signal a reward prediction error; they are activated by more reward than predicted (positive prediction error), remain at baseline activity for fully predicted rewards, and show depressed activity with less reward than predicted (negative prediction error). The dopamine signal increases nonlinearly with reward value and codes formal economic utility. Drugs of addiction generate, hijack, and amplify the dopamine reward signal and induce exaggerated, uncontrolled dopamine effects on neuronal plasticity. The striatum, amygdala, and frontal cortex also show reward prediction error coding, but only in subpopulations of neurons. Thus, the important concept of reward prediction errors is implemented in neuronal hardware.",
+        "pubTypeList": {
+          "pubType": [
+            "research-article",
+            "Review",
+            "Journal Article"
+          ]
+        },
+        "isOpenAccess": "Y",
+        "citedByCount": 336,
+        "firstPublicationDate": "2016-03-01"
+      },
+      {
+        "id": "PPR1367499",
+        "source": "PPR",
+        "doi": "10.64898/2026.11.11.765978",
+        "title": "Dopamine reward prediction error signal encodes effort cost as negative reward value",
+        "authorString": "Burrell M, Pastor-Bernier A, Schultz W.",
+        "authorList": {
+          "author": [
+            {
+              "fullName": "Burrell M",
+              "firstName": "Mark",
+              "lastName": "Burrell",
+              "initials": "M"
+            },
+            {
+              "fullName": "Pastor-Bernier A",
+              "firstName": "Alexandre",
+              "lastName": "Pastor-Bernier",
+              "initials": "A"
+            },
+            {
+              "fullName": "Schultz W",
+              "firstName": "Wolfram",
+              "lastName": "Schultz",
+              "initials": "W"
+            }
+          ]
+        },
+        "pubYear": "2026",
+        "abstractText": "All life must balance the economic problem of allocating scarce energy resources to maximize reward. Economic theory proposes that rational (reward-maximizing) decision makers balance the possible benefits from rewards against the cost of efforts for obtaining the rewards. Here we measured how the reward prediction error signal of monkey dopamine neurons reflects the negative value of effort cost (joystick resistance) and compared it with the dopamine signal for the positive value of reward. The animals repeatedly made binary choices between options varying in reward amount and effort to obtain the reward. Midbrain dopamine neurons signaled the negative value of effort cost both at effort-predicting stimuli (as reduction of reward-predicting excitation) and at experienced effort (as inhibition with more effort than predicted and as excitation with less effort). These effort signals contrasted with the opposite signal reflecting the positive value of reward relative to prediction (reward prediction error; RPE). Thus, dopamine neurons code effort cost as negative value opposite to the positive value of reward. In occurring with both stimuli and outcomes, this dopamine signal complies with the formalism of temporal difference reinforcement learning.",
+        "pubTypeList": {
+          "pubType": [
+            "Preprint"
+          ]
+        },
+        "isOpenAccess": "N",
+        "citedByCount": 0,
+        "firstPublicationDate": "2026-11-13"
+      }
+    ]
+  }
+}
