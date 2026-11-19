@@ -161,7 +161,9 @@ export function AnalysisPanel({ studyId, synthetic }: { studyId: string; synthet
           <p className="text-xs leading-5 text-muted">
             Strength words follow common rules of thumb (|ρ| &lt; 0.1 negligible, &lt; 0.3 weak,
             &lt; 0.5 moderate, otherwise strong). They describe size, not importance. When an
-            interval includes zero, even the direction of the association is uncertain.
+            interval includes zero, even the direction of the association is uncertain. The p-values
+            treat each check-in as independent, so with repeated check-ins per person they are too
+            small; rely on the interval instead.
           </p>
 
           <details>

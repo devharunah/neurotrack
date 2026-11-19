@@ -118,6 +118,10 @@ SD (ddof = 1), minimum, quartiles (linear interpolation) and maximum.
   results must never be applied to an individual.
 - **Missing data.** Pairwise deletion assumes answers are missing at random. The dashboard's
   missing-observation view should be checked before reading the associations.
+- **p-values ignore repeated measures.** The Spearman and Kruskal–Wallis p-values (and so the
+  Holm-adjusted values) treat every observation as independent. With several check-ins per
+  person they are too small, often by a lot. Read the participant-level bootstrap interval, not
+  the p-value, as the measure of uncertainty.
 - **Few participants.** With a cluster bootstrap and only a handful of participants, intervals are
   unstable and can be too narrow. Treat studies with fewer than about 10 participants as
   exploratory, whatever the observation count.
