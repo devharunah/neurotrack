@@ -93,10 +93,13 @@ export function syntheticPseudonym(random: Random): string {
   return `S-${code}`;
 }
 
-/** Local prompt hours, spread evenly between 08:00 and 22:00. */
+/**
+ * Local prompt hours, spread evenly between 08:00 and 22:00. A once-a-day schedule returns an
+ * empty list: that prompt comes at a random waking hour each day, as in signal-contingent EMA.
+ */
 export function promptHours(promptsPerDay: number): number[] {
   if (promptsPerDay <= 1) {
-    return [19];
+    return [];
   }
   const step = 14 / (promptsPerDay - 1);
   return Array.from({ length: promptsPerDay }, (_, i) => 8 + i * step);
@@ -172,7 +175,8 @@ export function generateSyntheticData(options: SyntheticOptions): SyntheticData 
         return;
       }
       const sleep = clampScore(t.sleepLevel + (weekend ? 0.4 : 0) + 1.6 * normal(random));
-      for (const base of hours) {
+      const today = hours.length > 0 ? hours : [8 + 14 * random()];
+      for (const base of today) {
         // Draw every random number up front so skipping a prompt keeps later draws aligned.
         const answered = random() < t.adherence;
         const jitter = Math.round(normal(random) * 40 + (random() - 0.5) * 20);

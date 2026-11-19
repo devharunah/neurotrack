@@ -137,8 +137,15 @@ describe("generateSyntheticData", () => {
     expect(observations.every((o) => typeof o.answers["q_abcd"] === "number")).toBe(true);
   });
 
+  it("spreads a once-a-day prompt across waking hours", () => {
+    const { observations } = generate({ promptsPerDay: 1 });
+    const hours = new Set(observations.map((o) => observationHour(o, TZ)));
+    expect(hours.size).toBeGreaterThan(8);
+    expect(observations.length).toBeLessThanOrEqual(20 * 30);
+  });
+
   it("spreads prompts across the waking day", () => {
-    expect(promptHours(1)).toEqual([19]);
+    expect(promptHours(1)).toEqual([]);
     expect(promptHours(3)).toEqual([8, 15, 22]);
   });
 });
