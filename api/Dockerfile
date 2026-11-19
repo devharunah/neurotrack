@@ -11,7 +11,7 @@
 # worker, so N workers allow up to N times the configured rate.
 
 # uv is copied from its official image; Dependabot (docker ecosystem) keeps both tags current.
-FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.9 AS uv
 
 # ---- Build stage: resolve and install the locked runtime dependencies into /app/.venv --------
 FROM python:3.12-slim AS builder
