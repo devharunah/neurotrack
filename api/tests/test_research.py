@@ -483,6 +483,43 @@ def test_validator_drops_unsupported_sentences_from_adversarial_llm_output() -> 
         assert all(1 <= i <= len(SOURCES) for i in sentence.citations)
 
 
+def test_extractive_never_quotes_an_abstracts_own_reference_numbers() -> None:
+    # Source 2's abstract cites "[1]" in its own reference list. Quoting that sentence with our
+    # "[2]" appended would be parsed as citing *our* source 1 too: a misattribution.
+    sources = [
+        _ref(pmid="1", abstract="Unrelated text about something else entirely here."),
+        _ref(
+            pmid="2",
+            abstract=(
+                "Dopamine reward signals were reported in earlier primate work [1]. "
+                "Dopamine reward signals were also measured in a large rodent cohort here."
+            ),
+        ),
+    ]
+    raw = asyncio.run(ExtractiveProvider().generate("dopamine reward signals", sources))
+    result = validate_answer(raw, sources)
+    assert [(s.text, s.citations) for s in result.sentences] == [
+        ("Dopamine reward signals were also measured in a large rodent cohort here.", [2])
+    ]
+    assert result.removed_unsupported == 0
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "Dopamine matters [[1]].",  # nested brackets leave "[]"
+        "Dopamine matters [1a] [1].",
+        "Dopamine matters [^2] [1].",
+        "Dopamine matters [Source 3] [1].",
+        "Dopamine matters [1, 9].",
+        "Dopamine matters [0-1].",
+    ],
+)
+def test_validator_drops_malformed_or_partly_invalid_markers(raw: str) -> None:
+    result = validate_answer(raw, SOURCES)
+    assert result.sentences == [] and result.removed_unsupported == 1
+
+
 def test_validator_with_no_sources_keeps_nothing() -> None:
     result = validate_answer("Dopamine matters [1]. It really does.", [])
     assert result.sentences == [] and result.removed_unsupported == 2

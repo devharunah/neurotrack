@@ -98,7 +98,12 @@ def query_terms(text: str) -> set[str]:
 
 _MARKER = re.compile(r"\[\s*(\d+(?:\s*(?:[-\u2013,;]|and)\s*\d+)*)\s*\]")
 # Anything bracketed that looks like an attempted citation but is not a clean numeric marker.
-_BROKEN_MARKER = re.compile(r"\[\s*(?:n|ref|source|citation|\?|[a-z]\w*\s*\d*)\s*\]", re.I)
+# Also catches what is left of nested or malformed numeric markers: "[]" (from "[[1]]"), "[1a]",
+# "[^2]" footnotes and "[#3]".
+_BROKEN_MARKER = re.compile(
+    r"\[\s*(?:n|ref|source|citation|\?|[a-z]\w*\s*\d*|[\^#]?\s*\d+\s*[a-z]?)?\s*\]",
+    re.I,
+)
 _DOI = re.compile(r"\b10\.\d{4,9}/[^\s\]\)]+", re.IGNORECASE)
 _PMID = re.compile(r"\bPMID:?\s*(\d{4,9})\b", re.IGNORECASE)
 _AUTHOR_YEAR = re.compile(r"\b([A-Z][A-Za-z'\-]+)\s+et al\.?,?\s*\(?(?:19|20)\d{2}")
@@ -236,6 +241,10 @@ class ExtractiveProvider:
                 continue
             for position, sentence in enumerate(split_sentences(source.abstract)):
                 text = _STRUCTURED_LABEL.sub("", sentence).strip()
+                # An abstract's own bracketed reference numbers ("as shown before [3]") would be
+                # read as citations of *our* source 3 and misattribute the quote, so skip them.
+                if _MARKER.search(text) or _BROKEN_MARKER.search(text):
+                    continue
                 words = _WORD.findall(text.lower())
                 if len(words) < 6:
                     continue
