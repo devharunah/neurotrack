@@ -57,8 +57,12 @@ test.describe("signed in", () => {
 
   test("an unknown region slug shows the not-found page", async ({ page }) => {
     await signIn(page, "/neuro");
-    const response = await page.goto("/neuro/regions/not-a-region");
-    expect(response?.status()).toBe(404);
+    // Lab pages stream behind (app)/loading.tsx, so Next has already sent a 200 by the time
+    // notFound() runs. Next documents this and marks the page noindex; assert the user-visible
+    // not-found view and that marker instead of the status code.
+    await page.goto("/neuro/regions/not-a-region");
+    await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+    await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
   });
 
   test("the simulator recomputes instantly and labels stress as hypothetical", async ({ page }) => {
