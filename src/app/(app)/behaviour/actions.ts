@@ -23,12 +23,12 @@ import {
   getMyParticipantId,
   getMyParticipation,
   getStudy,
-  listMyParticipations,
   loadStudyData,
   studyIdSchema,
 } from "@/lib/behaviour/server";
 import { MAX_SYNTHETIC_OBSERVATIONS, generateSyntheticData } from "@/lib/behaviour/synthetic";
 import { toZonedIso } from "@/lib/behaviour/time";
+import { SlidingWindowLimiter, describeWait } from "@/lib/security/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -45,6 +45,12 @@ const API_MAX_ROWS = 20_000;
 /** Fixed bootstrap seed, so re-running the analysis on the same rows gives the same intervals. */
 const ANALYSIS_SEED = 20261120;
 
+/**
+ * Join attempts per user per hour, checked before the database is asked. The database throttles
+ * failed codes too (10 per hour, shared by every web instance); this only stops a burst early.
+ */
+const joinLimiter = new SlidingWindowLimiter({ limit: 10, windowMs: 60 * 60 * 1000 });
+
 /** Turns a PostgREST/Postgres error into something a person can act on. */
 function databaseError(error: { code?: string; message: string }, fallback: string): Failure {
   switch (error.code) {
@@ -53,6 +59,7 @@ function databaseError(error: { code?: string; message: string }, fallback: stri
     case "23514":
     case "P0002":
     case "22023":
+    case "PT429":
       // Our own CHECK and RPC messages are written for people.
       return fail(error.message);
     case "23505":
@@ -165,9 +172,14 @@ const joinSchema = z.object({
 
 export async function joinStudyAction(
   raw: unknown,
-): Promise<ActionResult<{ pseudonym: string; studyId: string | null }>> {
-  if (!(await getSessionUser())) {
+): Promise<ActionResult<{ pseudonym: string; studyId: string }>> {
+  const user = await getSessionUser();
+  if (!user) {
     return NOT_SIGNED_IN;
+  }
+  const wait = joinLimiter.take(user.id);
+  if (wait > 0) {
+    return fail(`Too many join attempts. Try again in ${describeWait(wait)}.`);
   }
   const parsed = joinSchema.safeParse(raw);
   if (!parsed.success) {
@@ -184,12 +196,19 @@ export async function joinStudyAction(
     p_consent_version: parsed.data.consentVersion,
     p_consent_text_hash: hash,
   });
-  if (error || typeof data !== "string") {
+  if (error || !Array.isArray(data)) {
     return databaseError(error ?? { message: "" }, "Could not join the study.");
   }
-  const participation = (await listMyParticipations()).find((p) => p.pseudonym === data);
+  // One row on success; no rows when no active study uses the code (counted as a failed try).
+  const joined = (data as { joined_study_id: string; joined_pseudonym: string }[])[0];
+  if (!joined) {
+    return fail("No active study uses that join code.");
+  }
   refreshBehaviour();
-  return { ok: true, data: { pseudonym: data, studyId: participation?.study_id ?? null } };
+  return {
+    ok: true,
+    data: { pseudonym: joined.joined_pseudonym, studyId: joined.joined_study_id },
+  };
 }
 
 export async function submitObservationAction(

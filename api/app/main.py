@@ -8,12 +8,15 @@ from importlib.metadata import version
 from fastapi import FastAPI
 
 from app.behaviour.router import router as behaviour_router
+from app.config import Settings, get_settings
+from app.middleware import install_hardening
 from app.quantum.router import router as quantum_router
 from app.research.router import router as research_router
 
 
-def create_app() -> FastAPI:
+def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
+        debug=False,
         title="NeuroTrack API",
         version="0.1.0",
         description="Scientific computation for NeuroTrack. Educational and experimental; "
@@ -27,6 +30,7 @@ def create_app() -> FastAPI:
     app.include_router(quantum_router)
     app.include_router(behaviour_router)
     app.include_router(research_router)
+    install_hardening(app, settings or get_settings())
     return app
 
 

@@ -14,7 +14,8 @@ export const metadata: Metadata = { title: "Join a study · BehaviourLab" };
 export default async function JoinStudyPage({ params }: PageProps<"/behaviour/join/[code]">) {
   const { code: raw } = await params;
   const code = joinCodeSchema.safeParse(decodeURIComponent(raw));
-  const preview = code.success ? await previewStudy(code.data) : null;
+  const result = code.success ? await previewStudy(code.data) : null;
+  const preview = result?.status === "found" ? result.preview : null;
   const consent = getConsentDocument(CURRENT_CONSENT_VERSION);
 
   return (
@@ -26,7 +27,9 @@ export default async function JoinStudyPage({ params }: PageProps<"/behaviour/jo
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">Join a study</h1>
       </header>
 
-      {!preview || !code.success || !consent ? (
+      {result?.status === "throttled" ? (
+        <ErrorNote>{result.message}</ErrorNote>
+      ) : !preview || !code.success || !consent ? (
         <ErrorNote>
           No active study uses that join code. Check the code with the researcher who gave it to
           you.

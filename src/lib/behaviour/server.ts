@@ -178,13 +178,23 @@ export async function getStudy(studyId: string): Promise<Study | null> {
   return error || !data ? null : toStudy(data);
 }
 
-export async function previewStudy(code: string): Promise<StudyPreview | null> {
+export type PreviewResult =
+  | { status: "found"; preview: StudyPreview }
+  | { status: "not_found" }
+  | { status: "throttled"; message: string };
+
+/**
+ * What a join code opens. Each lookup of a code that matches no active study counts towards the
+ * database's per-user limit on failed codes, which answers PT429 once it is reached.
+ */
+export async function previewStudy(code: string): Promise<PreviewResult> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc("preview_study", { p_join_code: code });
-  if (error || !Array.isArray(data)) {
-    return null;
+  if (error?.code === "PT429") {
+    return { status: "throttled", message: error.message };
   }
-  return (data as StudyPreview[])[0] ?? null;
+  const preview = !error && Array.isArray(data) ? (data as StudyPreview[])[0] : undefined;
+  return preview ? { status: "found", preview } : { status: "not_found" };
 }
 
 export interface StudyData {

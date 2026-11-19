@@ -3,7 +3,14 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { requireEnv } from "@/lib/env";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/quantum", "/neuro", "/behaviour", "/research"];
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/quantum",
+  "/neuro",
+  "/behaviour",
+  "/research",
+  "/settings",
+];
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(

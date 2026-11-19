@@ -17,7 +17,7 @@ export function JoinForm({
 }) {
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [joined, setJoined] = useState<{ pseudonym: string; studyId: string | null } | null>(null);
+  const [joined, setJoined] = useState<{ pseudonym: string; studyId: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
   if (joined) {
@@ -35,14 +35,12 @@ export function JoinForm({
           </span>
           . Researchers see only this pseudonym, never your name or email.
         </p>
-        {joined.studyId && (
-          <Link
-            href={`/behaviour/participate/${joined.studyId}`}
-            className={`${primaryButton} inline-block`}
-          >
-            Go to your first check-in
-          </Link>
-        )}
+        <Link
+          href={`/behaviour/participate/${joined.studyId}`}
+          className={`${primaryButton} inline-block`}
+        >
+          Go to your first check-in
+        </Link>
       </section>
     );
   }

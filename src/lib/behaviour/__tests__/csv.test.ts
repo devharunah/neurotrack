@@ -8,9 +8,22 @@ describe("escapeCsvCell", () => {
     ["@SUM(A1)", "'@SUM(A1)"],
     ["\tcmd", "'\tcmd"],
     ["\r=1", `"'\r=1"`],
+    [" =1+1", "' =1+1"],
+    ["   @SUM(A1)", "'   @SUM(A1)"],
+    ["\u00a0-5", "'\u00a0-5"],
+    ["\n+cmd", `"'\n+cmd"`],
+    ["\u0000=1", "'\u0000=1"],
+    ["\u001f\u0007+1", "'\u001f\u0007+1"],
   ])("neutralises the formula trigger in %j", (input, expected) => {
     expect(escapeCsvCell(input)).toBe(expected);
   });
+
+  it.each(["a=b", "1-2", "email@example.com", " plain", "x\t=1"])(
+    "leaves %j without a text prefix",
+    (input) => {
+      expect(escapeCsvCell(input)).not.toMatch(/^"?'/);
+    },
+  );
 
   it("quotes commas, quotes, newlines and edge whitespace", () => {
     expect(escapeCsvCell("a,b")).toBe('"a,b"');

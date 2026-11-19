@@ -7,7 +7,7 @@ API never needs the Supabase JWT secret or the service-role key.
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Any
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -40,6 +40,25 @@ def _unauthorized(detail: str) -> HTTPException:
     )
 
 
+def decode_access_token(
+    token: str, supabase_url: str, audience: str, *, refresh_unknown_keys: bool = True
+) -> dict[str, Any]:
+    """Verify a Supabase access token and return its claims. Raises PyJWT errors when invalid.
+
+    `refresh_unknown_keys=False` only uses the cached JWKS: a token naming an unknown `kid` is
+    rejected instead of triggering a fetch (used by the rate limiter, which runs on every request).
+    """
+    client = _jwks_client(supabase_url)
+    if refresh_unknown_keys:
+        signing_key = client.get_signing_key_from_jwt(token)
+    else:
+        kid = jwt.get_unverified_header(token).get("kid")
+        signing_key = next((k for k in client.get_signing_keys() if k.key_id == kid), None)
+        if signing_key is None:
+            raise jwt.InvalidTokenError("Unknown signing key")
+    return jwt.decode(token, signing_key.key, algorithms=["ES256", "RS256"], audience=audience)
+
+
 def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -52,14 +71,9 @@ def get_current_user(
             detail="Authentication is not configured (SUPABASE_URL is unset)",
         )
 
-    token = credentials.credentials
     try:
-        signing_key = _jwks_client(settings.supabase_url).get_signing_key_from_jwt(token)
-        claims = jwt.decode(
-            token,
-            signing_key.key,
-            algorithms=["ES256", "RS256"],
-            audience=settings.supabase_jwt_audience,
+        claims = decode_access_token(
+            credentials.credentials, settings.supabase_url, settings.supabase_jwt_audience
         )
     except (jwt.PyJWTError, jwt.PyJWKClientError) as exc:
         raise _unauthorized("Invalid or expired token") from exc

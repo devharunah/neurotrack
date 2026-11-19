@@ -1,0 +1,16 @@
+# Only pyproject.toml, uv.lock, .python-version and app/ are needed in the image.
+.venv/
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+tests/
+openapi.json
+Dockerfile
+.dockerignore
+
+# Secrets never go into an image; pass them as runtime environment variables.
+.env
+.env.*
+!.env.example

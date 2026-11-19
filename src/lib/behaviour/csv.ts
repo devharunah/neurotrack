@@ -1,12 +1,13 @@
 /**
- * RFC 4180 CSV with spreadsheet formula-injection protection. A text cell that starts with
- * `=`, `+`, `-`, `@`, tab or carriage return is prefixed with `'` so spreadsheet software shows
- * it as text instead of evaluating it (OWASP "CSV Injection").
+ * RFC 4180 CSV with spreadsheet formula-injection protection. A text cell is prefixed with `'`,
+ * so spreadsheet software shows it as text instead of evaluating it (OWASP "CSV Injection"), when
+ * it starts with tab or carriage return, or with `=`, `+`, `-` or `@` after any run of whitespace
+ * or control characters (some spreadsheets skip those before looking for a formula).
  */
 
 export type CsvValue = string | number | boolean | null | undefined;
 
-const FORMULA_TRIGGERS = /^[=+\-@\t\r]/;
+const FORMULA_TRIGGERS = /^(?:[\t\r]|[\s\p{Cc}]*[=+\-@])/u;
 
 export function escapeCsvCell(value: CsvValue): string {
   if (value === null || value === undefined) {
