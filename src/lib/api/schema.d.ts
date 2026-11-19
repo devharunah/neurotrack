@@ -106,6 +106,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/research/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_research_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer */
+        post: operations["answer_research_answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -120,6 +154,50 @@ export interface components {
             im: number;
             /** Probability */
             probability: number;
+        };
+        /** AnswerRequest */
+        AnswerRequest: {
+            /** Question */
+            question: string;
+            /**
+             * Max Sources
+             * @default 5
+             */
+            max_sources: number;
+        };
+        /** AnswerResult */
+        AnswerResult: {
+            /** Question */
+            question: string;
+            /** Answer Sentences */
+            answer_sentences: components["schemas"]["AnswerSentence"][];
+            /** Sources */
+            sources: components["schemas"]["Reference"][];
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "extractive" | "ollama";
+            /** Provider Note */
+            provider_note?: string | null;
+            /** Removed Unsupported */
+            removed_unsupported: number;
+            /** Failed Sources */
+            failed_sources?: ("europepmc" | "pubmed")[];
+            /**
+             * Disclaimer
+             * @default Educational and experimental. This answer is assembled automatically from the abstracts listed below, which are a small, unranked sample of the literature. It is not a systematic review, not medical advice, and says nothing about any individual. Evidence labels describe the type of study, not its quality. Read the original publications before relying on a finding.
+             */
+            disclaimer: string;
+        };
+        /** AnswerSentence */
+        AnswerSentence: {
+            /** Text */
+            text: string;
+            /** Citations */
+            citations: number[];
+            /** Section */
+            section?: ("established" | "emerging" | "open-questions") | null;
         };
         /** Association */
         Association: {
@@ -381,6 +459,43 @@ export interface components {
              */
             caveat: string;
         };
+        /**
+         * Reference
+         * @description One publication, normalised across Europe PMC and PubMed.
+         */
+        Reference: {
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "europepmc" | "pubmed";
+            /** Pmid */
+            pmid?: string | null;
+            /** Pmcid */
+            pmcid?: string | null;
+            /** Doi */
+            doi?: string | null;
+            /** Title */
+            title: string;
+            /** Authors */
+            authors?: string[];
+            /** Journal */
+            journal?: string | null;
+            /** Year */
+            year?: number | null;
+            /** Abstract */
+            abstract?: string | null;
+            /** Publication Types */
+            publication_types?: string[];
+            /** Url */
+            url: string;
+            /**
+             * Evidence
+             * @default other
+             * @enum {string}
+             */
+            evidence: "systematic-review/meta-analysis" | "randomized-trial" | "review" | "primary-study" | "other";
+        };
         /** RowsRequest */
         RowsRequest: {
             /** Rows */
@@ -434,6 +549,13 @@ export interface components {
              * @default Qiskit little-endian: rightmost bit is qubit 0
              */
             bit_order: string;
+        };
+        /** SearchResult */
+        SearchResult: {
+            /** References */
+            references: components["schemas"]["Reference"][];
+            /** Failed Sources */
+            failed_sources?: ("europepmc" | "pubmed")[];
         };
         /** SummaryResult */
         SummaryResult: {
@@ -643,6 +765,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SummaryResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_research_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                source?: "all" | "europepmc" | "pubmed";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    answer_research_answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnswerResult"];
                 };
             };
             /** @description Validation Error */

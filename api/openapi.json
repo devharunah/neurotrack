@@ -239,6 +239,128 @@
           }
         ]
       }
+    },
+    "/research/search": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Search",
+        "operationId": "search_research_search_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 300,
+              "title": "Q"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "europepmc",
+                "pubmed"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Source"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 25,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/answer": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Answer",
+        "operationId": "answer_research_answer_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnswerResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -270,6 +392,136 @@
           "probability"
         ],
         "title": "Amplitude"
+      },
+      "AnswerRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 2,
+            "title": "Question"
+          },
+          "max_sources": {
+            "type": "integer",
+            "maximum": 8.0,
+            "minimum": 1.0,
+            "title": "Max Sources",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "AnswerRequest"
+      },
+      "AnswerResult": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "answer_sentences": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerSentence"
+            },
+            "type": "array",
+            "title": "Answer Sentences"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Reference"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "extractive",
+              "ollama"
+            ],
+            "title": "Provider"
+          },
+          "provider_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Note"
+          },
+          "removed_unsupported": {
+            "type": "integer",
+            "title": "Removed Unsupported"
+          },
+          "failed_sources": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "europepmc",
+                "pubmed"
+              ]
+            },
+            "type": "array",
+            "title": "Failed Sources"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer",
+            "default": "Educational and experimental. This answer is assembled automatically from the abstracts listed below, which are a small, unranked sample of the literature. It is not a systematic review, not medical advice, and says nothing about any individual. Evidence labels describe the type of study, not its quality. Read the original publications before relying on a finding."
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "answer_sentences",
+          "sources",
+          "provider",
+          "removed_unsupported"
+        ],
+        "title": "AnswerResult"
+      },
+      "AnswerSentence": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "citations": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Citations"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "established",
+                  "emerging",
+                  "open-questions"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "citations"
+        ],
+        "title": "AnswerSentence"
       },
       "Association": {
         "properties": {
@@ -990,6 +1242,126 @@
         ],
         "title": "QmlCompareResult"
       },
+      "Reference": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "europepmc",
+              "pubmed"
+            ],
+            "title": "Source"
+          },
+          "pmid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pmid"
+          },
+          "pmcid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pmcid"
+          },
+          "doi": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doi"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "authors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Authors"
+          },
+          "journal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Journal"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "abstract": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abstract"
+          },
+          "publication_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Publication Types"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "systematic-review/meta-analysis",
+              "randomized-trial",
+              "review",
+              "primary-study",
+              "other"
+            ],
+            "title": "Evidence",
+            "default": "other"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "title",
+          "url"
+        ],
+        "title": "Reference",
+        "description": "One publication, normalised across Europe PMC and PubMed."
+      },
       "RowsRequest": {
         "properties": {
           "rows": {
@@ -1133,6 +1505,33 @@
           "elapsed_ms"
         ],
         "title": "RunResult"
+      },
+      "SearchResult": {
+        "properties": {
+          "references": {
+            "items": {
+              "$ref": "#/components/schemas/Reference"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "failed_sources": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "europepmc",
+                "pubmed"
+              ]
+            },
+            "type": "array",
+            "title": "Failed Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "references"
+        ],
+        "title": "SearchResult"
       },
       "SummaryResult": {
         "properties": {
