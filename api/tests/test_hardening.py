@@ -214,8 +214,16 @@ def test_unhandled_exception_hides_stack_trace(caplog: pytest.LogCaptureFixture)
 
 def test_trusted_hosts() -> None:
     client = _client(_settings(allowed_hosts=["api.example.org"]))
-    assert client.get("/health").status_code == 400
-    assert client.get("/health", headers={"host": "api.example.org"}).status_code == 200
+    assert client.get("/quantum/presets").status_code == 400
+    ok = client.get("/quantum/presets", headers={"host": "api.example.org"})
+    assert ok.status_code == 200
+
+
+def test_health_answers_any_host_for_probes() -> None:
+    client = _client(_settings(allowed_hosts=["api.example.org"]))
+    assert client.get("/health", headers={"host": "10.0.0.7:8000"}).status_code == 200
+    # Only the exact path is exempt.
+    assert client.get("/health/x", headers={"host": "10.0.0.7:8000"}).status_code == 400
 
 
 def test_production_refuses_wildcard_hosts() -> None:

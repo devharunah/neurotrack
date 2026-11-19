@@ -8,7 +8,8 @@ Order, outermost first:
 
 1. `RequestContextMiddleware`: request ID, JSON access log, security headers, and the last-resort
    500 handler, so even rejected or crashed requests are logged and carry the headers.
-2. `TrustedHostMiddleware` (Starlette): rejects unexpected `Host` headers with 400.
+2. `TrustedHostMiddleware` (Starlette): rejects unexpected `Host` headers with 400, except on
+   `/health`, which container and platform probes call by IP.
 3. `BodySizeLimitMiddleware`: 413 for oversized bodies.
 4. `RateLimitMiddleware`: 429 with `Retry-After`.
 """
@@ -248,6 +249,25 @@ class RequestContextMiddleware:
 
 
 # --------------------------------------------------------------------------------------------
+# Trusted hosts
+# --------------------------------------------------------------------------------------------
+
+
+class TrustedHostMiddlewareExceptHealth(TrustedHostMiddleware):
+    """`TrustedHostMiddleware`, but `/health` answers whatever the Host header says.
+
+    Container healthchecks and platform probes call the API by IP or an internal name that is
+    not in ALLOWED_HOSTS. `/health` returns only static version strings, so exempting it is safe.
+    """
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http" and scope.get("path") == "/health":
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
+
+
+# --------------------------------------------------------------------------------------------
 # Body size limit
 # --------------------------------------------------------------------------------------------
 
@@ -441,7 +461,7 @@ def install_hardening(app: FastAPI, settings: Settings) -> None:
     if settings.rate_limit_enabled:
         app.add_middleware(RateLimitMiddleware, settings=settings)
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+    app.add_middleware(TrustedHostMiddlewareExceptHealth, allowed_hosts=settings.allowed_hosts)
     app.add_middleware(
         RequestContextMiddleware,
         production=settings.environment == "production",
