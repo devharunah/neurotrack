@@ -16,11 +16,9 @@ Do the steps in order. Nothing in this repository deploys by itself: CI only che
 
 ## 0. Before the first deploy
 
-- [ ] **Upgrade Next.js.** `pnpm audit --prod` (the CI `security` job) reports critical advisories
-      against the pinned `next` (16.3.4) that are fixed in 16.4.1 or later, including remote code
-      execution in image optimisation. Upgrade `next` (and `eslint-config-next` to match), run
-      every check and the E2E suite, then deploy. Do not deploy a version the audit flags as
-      critical.
+- [ ] **Dependency audit is clean.** `pnpm audit --prod --audit-level high` (the CI `security`
+      job) must report nothing high or critical. `next` was upgraded to 16.4.6 for the critical
+      16.3.x advisories; do not deploy a version the audit flags.
 - [ ] CI is green on `main`, including `api-image` (the Docker image builds and passes its own
       healthcheck).
 - [ ] Decide the public URLs, for example `https://neurotrack.example.org` (web) and

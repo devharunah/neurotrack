@@ -76,14 +76,14 @@ any real person is invited.
 
 | What | Kept until | How to delete |
 |---|---|---|
-| Account and everything linked to it | The account is deleted | The operator deletes the user in Supabase Auth; every table cascades (`on delete cascade` to `auth.users`) |
+| Account and everything linked to it | The account is deleted | The operator deletes the user in Supabase Auth; every table with a `user_id`/`owner_id`/`inserted_by` column cascades (`on delete cascade` to `auth.users`), including studies the user owns |
 | Saved experiments | The user deletes them | `/settings` → Delete all my experiment history |
 | Research history and saved references | The user deletes them | Research Assistant: clear history; unsave a reference |
 | Cached publication metadata (public bibliographic data) | The account is deleted | Append-only for clients; removed with the account |
-| A participant's answers | Withdrawal with deletion, study deletion, or account deletion | Study page → Withdraw → delete my answers |
+| A participant's answers | Withdrawal with deletion, or study deletion. **Account deletion does not delete them**: it removes only `participant_links`, leaving the pseudonym, consent record and answers in the study, unlinked | Study page → Withdraw → delete my answers (before asking for account deletion) |
 | Studies and all their participants, observations, consents and export logs | The owner deletes the study | Study settings → Delete |
 | Synthetic participants | The researcher clears them | Study page → Clear synthetic data |
-| Failed join attempts | 1 day (pruned on the user's next lookup) | Automatic |
+| Failed join attempts | At least 1 hour; rows older than 1 day are pruned on the user's next lookup, and all go with the account | Automatic |
 | API logs | The hosting provider's log retention | Provider settings |
 | Database backups | The Supabase plan's backup retention | Supabase |
 

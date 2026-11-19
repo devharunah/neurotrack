@@ -100,8 +100,10 @@ export default function PrivacyPage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             Everything is kept until you delete it or your account is deleted. Deleting an account
-            removes its profile, experiments, research history, study memberships and participant
-            links from the database.
+            removes its profile, experiments, research history, study memberships, the studies it
+            owns, and the links between it and any study pseudonyms. Check-in answers you gave as a
+            participant stay in the study under the pseudonym, no longer linked to you, unless you
+            first withdraw and choose to delete them.
           </li>
           <li>
             In{" "}
