@@ -11,10 +11,8 @@ const password = process.env["E2E_USER_PASSWORD"];
 test.skip(!email || !password, "Set E2E_USER_EMAIL and E2E_USER_PASSWORD to run");
 
 test("a Bell-state run shows only 00 and 11 and is saved to history", async ({ page }) => {
-  await page.goto("/login?next=/quantum");
-  await page.getByLabel("Email").fill(email ?? "");
-  await page.getByLabel("Password").fill(password ?? "");
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  // Signed in once by e2e/auth.setup.ts; the session is reused here.
+  await page.goto("/quantum");
   await expect(page).toHaveURL(/\/quantum$/);
 
   await page.getByRole("button", { name: "Bell state" }).click();

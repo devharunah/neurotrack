@@ -8,17 +8,19 @@ import { type Page, expect, test } from "@playwright/test";
 const email = process.env["E2E_USER_EMAIL"];
 const password = process.env["E2E_USER_PASSWORD"];
 
+/** The session comes from e2e/auth.setup.ts: open the page and confirm we were not bounced. */
 async function signIn(page: Page, next: string) {
-  await page.goto(`/login?next=${encodeURIComponent(next)}`);
-  await page.getByLabel("Email").fill(email ?? "");
-  await page.getByLabel("Password").fill(password ?? "");
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.goto(next);
   await expect(page).toHaveURL(new RegExp(`${next.replace(/\//g, "\\/")}$`));
 }
 
-test("signed-out visitors are sent to login from NeuroLab", async ({ page }) => {
-  await page.goto("/neuro/reward-learning");
-  await expect(page).toHaveURL(/\/login\?next=%2Fneuro%2Freward-learning/);
+test.describe("signed out", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("visitors are sent to login from NeuroLab", async ({ page }) => {
+    await page.goto("/neuro/reward-learning");
+    await expect(page).toHaveURL(/\/login\?next=%2Fneuro%2Freward-learning/);
+  });
 });
 
 test.describe("signed in", () => {
