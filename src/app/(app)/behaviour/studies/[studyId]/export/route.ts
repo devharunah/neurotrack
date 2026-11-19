@@ -14,7 +14,8 @@ const plain = (message: string, status: number) =>
 /**
  * Researcher-only, pseudonymous CSV export. RLS decides membership: a non-member cannot read
  * the study, so `getStudy` returns null and the request is refused. Every export is logged in
- * `export_audit` before any data is sent; if the log cannot be written, nothing is exported.
+ * `export_audit` (through the `log_study_export` RPC) before any data is sent; if the log cannot be
+ * written, nothing is exported.
  */
 export async function GET(
   _request: NextRequest,
@@ -50,10 +51,11 @@ export async function GET(
     now,
   });
 
+  // The database counts the rows it logs (`log_study_export`); clients cannot write the audit
+  // table directly. A check-in saved between the read above and this call can make the logged
+  // count differ from the file by a row or two; the log is the authoritative record.
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
-    .from("export_audit")
-    .insert({ study_id: study.id, row_count: result.rowCount });
+  const { error } = await supabase.rpc("log_study_export", { p_study_id: study.id });
   if (error) {
     return plain("The export could not be logged, so it was not created.", 500);
   }

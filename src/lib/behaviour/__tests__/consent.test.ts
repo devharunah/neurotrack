@@ -2,6 +2,8 @@
  * @jest-environment node
  */
 import { createHash } from "node:crypto";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 
 import {
   CONSENT_DOCUMENTS,
@@ -52,5 +54,19 @@ describe("consent", () => {
     expect(text).toMatch(/Ugandan/);
     expect(text).toMatch(/not a clinical service/);
     expect(text).toMatch(/not a cause/);
+  });
+
+  it("has every published version and hash seeded in public.consent_versions", async () => {
+    // join_study rejects any version/hash pair the migrations did not seed. Publishing a new
+    // version therefore needs a migration that inserts its hash; this test fails until it does.
+    const dir = join(process.cwd(), "supabase", "migrations");
+    const sql = readdirSync(dir)
+      .filter((name) => name.endsWith(".sql"))
+      .map((name) => readFileSync(join(dir, name), "utf8"))
+      .join("\n");
+    for (const version of Object.keys(CONSENT_DOCUMENTS)) {
+      const hash = await consentTextHash(version);
+      expect(sql).toContain(`('${version}', '${hash}')`);
+    }
   });
 });
