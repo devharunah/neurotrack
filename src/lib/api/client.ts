@@ -34,24 +34,33 @@ export class ApiError extends Error {
   }
 }
 
-async function call<T>(path: string, init: RequestInit & { auth?: boolean } = {}): Promise<T> {
-  const headers = new Headers(init.headers);
+/**
+ * `auth`: `true` (default) requires the user's token; `"optional"` sends it when there is one.
+ * The API rate-limits per JWT `sub`, falling back to the caller's IP, which for these
+ * server-to-server calls is the web server's IP shared by every user. So even public routes send
+ * the token when one exists, to keep each person in their own bucket.
+ */
+async function call<T>(
+  path: string,
+  init: RequestInit & { auth?: true | "optional" } = {},
+): Promise<T> {
+  const { auth = true, ...requestInit } = init;
+  const headers = new Headers(requestInit.headers);
   headers.set("Accept", "application/json");
-  if (init.body) {
+  if (requestInit.body) {
     headers.set("Content-Type", "application/json");
   }
-  if (init.auth !== false) {
-    const token = await getAccessToken();
-    if (!token) {
-      throw new ApiError("You need to be signed in.", 401);
-    }
+  const token = await getAccessToken();
+  if (token) {
     headers.set("Authorization", `Bearer ${token}`);
+  } else if (auth === true) {
+    throw new ApiError("You need to be signed in.", 401);
   }
 
   let response: Response;
   try {
     response = await fetch(`${requireEnv("NEUROTRACK_API_URL")}${path}`, {
-      ...init,
+      ...requestInit,
       headers,
       cache: "no-store",
     });
@@ -89,7 +98,7 @@ async function describeError(response: Response): Promise<string> {
 }
 
 export const api = {
-  presets: () => call<Preset[]>("/quantum/presets", { auth: false }),
+  presets: () => call<Preset[]>("/quantum/presets", { auth: "optional" }),
   runCircuit: (body: RunRequest) =>
     call<RunResult>("/quantum/run", { method: "POST", body: JSON.stringify(body) }),
   qmlCompare: (body: QmlCompareRequest) =>

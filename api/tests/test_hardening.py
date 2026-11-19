@@ -66,6 +66,20 @@ def test_default_bucket_is_looser_than_strict() -> None:
     assert statuses == [200] * 5 + [429]
 
 
+def test_each_strict_prefix_has_its_own_bucket() -> None:
+    client = _client(_settings())
+    for _ in range(2):
+        assert client.get("/quantum/presets").status_code == 200
+    assert client.get("/quantum/presets").status_code == 429
+    # Same client, other strict prefixes: fresh budgets (422 = reached validation, not throttled).
+    assert client.get("/research/search").status_code == 422
+    assert client.post("/behaviour/summary", json={}).status_code == 422
+
+
+def test_behaviour_is_strict_by_default() -> None:
+    assert "/behaviour/" in Settings(_env_file=None).rate_limit_strict_prefixes  # type: ignore[call-arg]
+
+
 def test_health_is_never_rate_limited() -> None:
     client = _client(_settings(rate_limit_burst=1))
     assert all(client.get("/health").status_code == 200 for _ in range(5))

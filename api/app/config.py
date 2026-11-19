@@ -49,11 +49,15 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
     rate_limit_burst: int = Field(default=60, ge=1)
     rate_limit_per_minute: int = Field(default=120, ge=1)
-    # Stricter bucket for expensive routes (simulation, literature search).
+    # Stricter buckets for expensive routes: circuit simulation and QML, literature search and
+    # cited answers (several upstream calls each), and the BehaviourLab bootstrap. Each prefix
+    # gets its own bucket per client. One web action costs at most two requests (a circuit run
+    # with noise, or an analysis = associations + summary), so the defaults allow 5 actions at
+    # once and about 10 a minute per lab.
     rate_limit_strict_burst: int = Field(default=10, ge=1)
     rate_limit_strict_per_minute: int = Field(default=20, ge=1)
     rate_limit_strict_prefixes: Annotated[list[str], NoDecode] = Field(
-        default_factory=lambda: ["/quantum/", "/research/"]
+        default_factory=lambda: ["/quantum/", "/research/", "/behaviour/"]
     )
 
     @field_validator("allowed_hosts", "rate_limit_strict_prefixes", mode="before")

@@ -398,8 +398,13 @@ class RateLimitMiddleware:
             return
 
         key = rate_limit_key(scope, trust_proxy_headers=self.trust_proxy_headers)
-        limiter = self.strict if path.startswith(self.strict_prefixes) else self.default
-        retry_after = limiter.take(key)
+        prefix = next((p for p in self.strict_prefixes if path.startswith(p)), None)
+        # Each strict prefix has its own budget per client, so heavy use of one lab (say, a
+        # literature answer) never locks the same person out of another (a circuit run).
+        if prefix is None:
+            retry_after = self.default.take(key)
+        else:
+            retry_after = self.strict.take(f"{prefix}|{key}")
         if retry_after > 0:
             await _send_json(
                 send,
