@@ -44,7 +44,7 @@ jobs:
         working-directory: api
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: api/uv.lock
@@ -103,7 +103,7 @@ jobs:
       - uses: ./.github/actions/setup
       - name: pnpm audit (production dependencies)
         run: pnpm audit --prod --audit-level high
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         if: ${{ !cancelled() }}
         with:
           enable-cache: true
