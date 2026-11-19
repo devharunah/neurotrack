@@ -101,7 +101,7 @@ def _tables_spearman(tables: np.ndarray) -> np.ndarray:
 def _tables_epsilon_squared(tables: np.ndarray) -> np.ndarray:
     """Kruskal-Wallis epsilon squared for each (B, groups, levels) table of counts.
 
-    Tomczak & Tomczak (2014): E^2_R = H / ((n^2 - 1) / (n + 1)) = H / (n - 1), with H corrected
+    Rank epsilon squared: E^2_R = H / ((n^2 - 1) / (n + 1)) = H / (n - 1), with H corrected
     for ties. NaN when fewer than two groups are observed or every value is identical.
     """
     t = tables.sum(axis=1)
