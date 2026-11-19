@@ -22,10 +22,7 @@
     "api:types": "pnpm api:openapi && openapi-typescript api/openapi.json -o src/lib/api/schema.d.ts"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "@biomejs/biome",
-      "unrs-resolver"
-    ]
+    "onlyBuiltDependencies": ["@biomejs/biome", "unrs-resolver"]
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

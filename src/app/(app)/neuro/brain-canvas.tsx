@@ -8,8 +8,8 @@ import { AdditiveBlending, type Mesh, type MeshBasicMaterial } from "three";
 import {
   BRAIN_REGIONS,
   type BrainRegion,
-  explorerPositions,
   type Vec3,
+  explorerPositions,
 } from "@/lib/content/brain-regions";
 
 export interface BrainCanvasProps {
