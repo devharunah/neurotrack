@@ -33,13 +33,13 @@ describe("buildCsp", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("worker-src 'self' blob:");
-    expect(csp).toContain("upgrade-insecure-requests");
+    // Breaks `next start` over http (same-origin redirects get upgraded); HSTS covers https.
+    expect(csp).not.toContain("upgrade-insecure-requests");
   });
 
   it("allows eval only in development", () => {
     const csp = buildCsp({ isDev: true });
     expect(csp).toContain("'unsafe-eval'");
-    expect(csp).not.toContain("upgrade-insecure-requests");
     expect(csp).toContain("connect-src 'self';");
   });
 });

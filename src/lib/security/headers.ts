@@ -11,7 +11,7 @@
 export interface SecurityHeaderOptions {
   /** `NEXT_PUBLIC_SUPABASE_URL`, read at build time. Added to `connect-src` (https and wss). */
   supabaseUrl?: string;
-  /** `NODE_ENV === "development"`. Allows eval and drops HSTS / upgrade-insecure-requests. */
+  /** `NODE_ENV === "development"`. Allows eval and drops HSTS. */
   isDev: boolean;
 }
 
@@ -55,9 +55,13 @@ export function buildCsp({ supabaseUrl, isDev }: SecurityHeaderOptions): string 
     "frame-src": ["'none'"],
     "manifest-src": ["'self'"],
   };
-  const parts = Object.entries(directives).map(([name, values]) => `${name} ${values.join(" ")}`);
-  if (!isDev) parts.push("upgrade-insecure-requests");
-  return parts.join("; ");
+  // No `upgrade-insecure-requests`: it also upgrades same-origin redirects, so `next start` over
+  // plain http (local production checks, the Playwright suite) failed whenever the proxy
+  // redirected to /login. Production is https-only through the host's redirect plus HSTS, and
+  // no page loads http: subresources, so the directive added nothing there.
+  return Object.entries(directives)
+    .map(([name, values]) => `${name} ${values.join(" ")}`)
+    .join("; ");
 }
 
 export function securityHeaders(options: SecurityHeaderOptions): Header[] {
