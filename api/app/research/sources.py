@@ -48,11 +48,15 @@ class RateLimiter:
     """Spaces calls at least ``1 / per_second`` apart, process-wide.
 
     Slots are reserved under a threading lock with no await inside it, so this is safe across
-    event loops and threads; the wait itself happens outside the lock.
+    event loops and threads; the wait itself happens outside the lock. The queue is bounded: when
+    the next free slot is more than ``max_wait_s`` away (a burst of concurrent requests), no slot
+    is reserved and ``RateLimitBusyError`` is raised, so one user's burst cannot make every
+    other request wait without limit.
     """
 
-    def __init__(self, per_second: float) -> None:
+    def __init__(self, per_second: float, max_wait_s: float = 10.0) -> None:
         self.interval = 1.0 / per_second
+        self.max_wait_s = max_wait_s
         self._next = 0.0
         self._lock = threading.Lock()
 
@@ -61,6 +65,8 @@ class RateLimiter:
         with self._lock:
             now = time.monotonic()
             slot = max(now, self._next)
+            if slot - now > self.max_wait_s:
+                raise RateLimitBusyError(slot - now)
             self._next = slot + self.interval
             return slot - now
 
@@ -68,6 +74,13 @@ class RateLimiter:
         delay = self.reserve()
         if delay > 0:
             await sleep(delay)
+
+
+class RateLimitBusyError(Exception):
+    """The rate limiter's queue is full: the next slot is too far away to wait for."""
+
+    def __init__(self, wait_s: float) -> None:
+        super().__init__(f"rate limit queue full (next slot in {wait_s:.1f} s)")
 
 
 # One limiter per key state, shared by every request this process makes to NCBI.
@@ -99,7 +112,10 @@ async def get_with_retries(
     last_problem = "no attempt made"
     for attempt in range(policy.attempts):
         if limiter is not None:
-            await limiter.acquire(sleep)
+            try:
+                await limiter.acquire(sleep)
+            except RateLimitBusyError as exc:
+                raise UpstreamError(source, str(exc)) from exc
         wait = policy.backoff_s * (2**attempt)
         try:
             # The User-Agent is set per request so it holds whichever client is passed in.

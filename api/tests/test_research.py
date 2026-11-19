@@ -24,6 +24,7 @@ from app.research.sources import (
     USER_AGENT,
     EuropePmcClient,
     PubMedClient,
+    RateLimitBusyError,
     RateLimiter,
     RetryPolicy,
     UpstreamError,
@@ -672,3 +673,11 @@ def test_search_rejects_bad_input(research_client: TestClient, params: dict[str,
 )
 def test_answer_rejects_bad_input(research_client: TestClient, payload: dict[str, object]) -> None:
     assert research_client.post("/research/answer", json=payload).status_code == 422
+
+
+def test_rate_limiter_queue_is_bounded() -> None:
+    limiter = RateLimiter(3, max_wait_s=1.0)
+    waits = [limiter.reserve() for _ in range(4)]  # slots at 0, 1/3, 2/3 and 1 s
+    assert waits[0] == pytest.approx(0, abs=0.05) and waits[-1] == pytest.approx(1, abs=0.05)
+    with pytest.raises(RateLimitBusyError):
+        limiter.reserve()  # the next slot is more than 1 s away: refuse, do not queue
