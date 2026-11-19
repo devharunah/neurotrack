@@ -78,9 +78,11 @@ export function securityHeaders(options: SecurityHeaderOptions): Header[] {
     { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   ];
   if (!options.isDev) {
+    // No `preload`: that is a request to be hard-coded into browsers for the whole registrable
+    // domain, which only the domain's owner should opt into deliberately (hstspreload.org).
     headers.push({
       key: "Strict-Transport-Security",
-      value: "max-age=63072000; includeSubDomains; preload",
+      value: "max-age=63072000; includeSubDomains",
     });
   }
   return headers;
