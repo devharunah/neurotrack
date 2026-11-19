@@ -16,8 +16,6 @@ Order, outermost first:
 
 from __future__ import annotations
 
-import base64
-import binascii
 import json
 import logging
 import math
@@ -34,9 +32,11 @@ from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.auth import decode_access_token
 from app.config import Settings
 
 REQUEST_ID_HEADER = "x-request-id"
@@ -97,45 +97,59 @@ def _header(scope: Scope, name: bytes) -> str | None:
 
 
 def client_ip(scope: Scope, *, trust_proxy_headers: bool) -> str:
+    """The peer address, or with `trust_proxy_headers` the right-most `X-Forwarded-For` entry.
+
+    Proxies append the address they received the request from, so only the last entry was
+    written by the platform's proxy; everything to its left came from the client and is ignored.
+    """
     if trust_proxy_headers:
         forwarded = _header(scope, b"x-forwarded-for")
         if forwarded:
-            first = forwarded.split(",")[0].strip()
-            if first:
-                return first
+            last = forwarded.split(",")[-1].strip()
+            if last:
+                return last
     client = scope.get("client")
     return client[0] if client else "unknown"
 
 
-def jwt_subject(scope: Scope) -> str | None:
-    """Read `sub` from a Bearer JWT payload WITHOUT verifying it.
-
-    Only used to pick a rate-limit bucket. A forged token gets its own bucket but is then
-    rejected with 401 by `get_current_user` before any expensive work runs, so forging buys
-    nothing. The bucket table is bounded, so rotating forged subjects cannot exhaust memory.
-    """
+def _bearer_token(scope: Scope) -> str | None:
     auth = _header(scope, b"authorization")
     if not auth or not auth.lower().startswith("bearer "):
         return None
-    parts = auth[7:].strip().split(".")
-    if len(parts) != 3:
+    token = auth[7:].strip()
+    return token or None
+
+
+def verified_subject(scope: Scope, settings: Settings) -> str | None:
+    """`sub` of the request's Bearer token, but only if its signature verifies.
+
+    An unverified `sub` would let anyone pick their own bucket (a fresh one per request, or a
+    victim's to lock them out), so a forged, expired or unverifiable token counts as no token and
+    the request is keyed by IP. Uses only the cached JWKS (no fetch for unknown key ids).
+    """
+    token = _bearer_token(scope)
+    if token is None or not settings.supabase_url:
         return None
-    segment = parts[1]
     try:
-        raw = base64.urlsafe_b64decode(segment + "=" * (-len(segment) % 4))
-        claims = json.loads(raw)
-    except (binascii.Error, ValueError):
+        claims = decode_access_token(
+            token,
+            settings.supabase_url,
+            settings.supabase_jwt_audience,
+            refresh_unknown_keys=False,
+        )
+    except Exception:
+        # Invalid tokens (PyJWT errors) and JWKS outages alike: never fail the request here,
+        # fall back to the IP key. The route's own auth dependency still rejects bad tokens.
         return None
-    sub = claims.get("sub") if isinstance(claims, dict) else None
+    sub = claims.get("sub")
     if isinstance(sub, str) and 0 < len(sub) <= 128:
         return sub
     return None
 
 
-def rate_limit_key(scope: Scope, *, trust_proxy_headers: bool) -> str:
-    sub = jwt_subject(scope)
-    if sub is not None:
-        return f"sub:{sub}"
+def rate_limit_key(scope: Scope, *, subject: str | None, trust_proxy_headers: bool) -> str:
+    if subject is not None:
+        return f"sub:{subject}"
     return f"ip:{client_ip(scope, trust_proxy_headers=trust_proxy_headers)}"
 
 
@@ -401,6 +415,7 @@ class RateLimitMiddleware:
 
     def __init__(self, app: ASGIApp, *, settings: Settings) -> None:
         self.app = app
+        self.settings = settings
         self.trust_proxy_headers = settings.trust_proxy_headers
         self.strict_prefixes = tuple(settings.rate_limit_strict_prefixes)
         self.default = TokenBucketLimiter(
@@ -417,7 +432,13 @@ class RateLimitMiddleware:
             await self.app(scope, receive, send)
             return
 
-        key = rate_limit_key(scope, trust_proxy_headers=self.trust_proxy_headers)
+        # Verification can fetch the JWKS once (cold cache), so it runs off the event loop.
+        subject = (
+            await run_in_threadpool(verified_subject, scope, self.settings)
+            if _bearer_token(scope) is not None
+            else None
+        )
+        key = rate_limit_key(scope, subject=subject, trust_proxy_headers=self.trust_proxy_headers)
         prefix = next((p for p in self.strict_prefixes if path.startswith(p)), None)
         # Each strict prefix has its own budget per client, so heavy use of one lab (say, a
         # literature answer) never locks the same person out of another (a circuit run).

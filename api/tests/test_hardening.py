@@ -2,14 +2,50 @@ import base64
 import json
 import logging
 
+import jwt
 import pytest
+from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
 
+import app.auth as auth_module
 from app.auth import CurrentUser, get_current_user
 from app.config import Settings
 from app.main import create_app
-from app.middleware import TokenBucketLimiter, jwt_subject, rate_limit_key
+from app.middleware import TokenBucketLimiter, rate_limit_key, verified_subject
+
+_SUPABASE_URL = "https://example.supabase.co"
+_KID = "test-key"
+_PRIVATE_KEY = ec.generate_private_key(ec.SECP256R1())
+
+
+class _FakeJwksClient:
+    """Stands in for PyJWKClient: serves one EC public key, never touches the network."""
+
+    def __init__(self) -> None:
+        jwk = json.loads(jwt.algorithms.ECAlgorithm.to_jwk(_PRIVATE_KEY.public_key()))
+        jwk.update({"kid": _KID, "alg": "ES256", "use": "sig"})
+        self.key = jwt.PyJWK.from_dict(jwk)
+
+    def get_signing_keys(self, refresh: bool = False) -> list[jwt.PyJWK]:
+        return [self.key]
+
+    def get_signing_key_from_jwt(self, token: str) -> jwt.PyJWK:
+        return self.key
+
+
+@pytest.fixture(autouse=True)
+def _fake_jwks(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(auth_module, "_jwks_client", lambda _url: _FakeJwksClient())
+
+
+def _signed_jwt(sub: str) -> str:
+    return jwt.encode(
+        {"sub": sub, "aud": "authenticated", "exp": 4_000_000_000},
+        _PRIVATE_KEY,
+        algorithm="ES256",
+        headers={"kid": _KID},
+    )
 
 
 def _settings(**overrides: object) -> Settings:
@@ -19,6 +55,7 @@ def _settings(**overrides: object) -> Settings:
         "rate_limit_strict_burst": 2,
         "rate_limit_strict_per_minute": 6,
         "max_body_bytes": 1024,
+        "supabase_url": _SUPABASE_URL,
     }
     base.update(overrides)
     return Settings(**base)  # type: ignore[arg-type]
@@ -85,40 +122,70 @@ def test_health_is_never_rate_limited() -> None:
     assert all(client.get("/health").status_code == 200 for _ in range(5))
 
 
-def test_rate_limit_key_uses_sub() -> None:
+def test_rate_limit_key_uses_verified_sub() -> None:
     client = _client(_settings())
-    alice = {"Authorization": f"Bearer {_fake_jwt('alice')}"}
-    bob = {"Authorization": f"Bearer {_fake_jwt('bob')}"}
+    alice = {"Authorization": f"Bearer {_signed_jwt('alice')}"}
+    bob = {"Authorization": f"Bearer {_signed_jwt('bob')}"}
     for _ in range(2):
         assert client.get("/quantum/presets", headers=alice).status_code == 200
     assert client.get("/quantum/presets", headers=alice).status_code == 429
-    # Same IP, different subject: separate bucket.
+    # Same IP, different verified subject: separate bucket.
     assert client.get("/quantum/presets", headers=bob).status_code == 200
 
 
+def test_forged_sub_cannot_pick_a_bucket() -> None:
+    client = _client(_settings())
+    # Unsigned tokens with a fresh `sub` each time all land in the caller's IP bucket.
+    statuses = [
+        client.get(
+            "/quantum/presets", headers={"Authorization": f"Bearer {_fake_jwt(f'x{i}')}"}
+        ).status_code
+        for i in range(3)
+    ]
+    assert statuses == [200, 200, 429]
+    # And a forged token naming a real user does not spend that user's budget.
+    assert (
+        client.get(
+            "/quantum/presets", headers={"Authorization": f"Bearer {_signed_jwt('victim')}"}
+        ).status_code
+        == 200
+    )
+
+
 def test_rate_limit_key_function() -> None:
+    settings = _settings()
     scope = {
         "type": "http",
-        "headers": [(b"authorization", f"Bearer {_fake_jwt('user-123')}".encode())],
+        "headers": [(b"authorization", f"Bearer {_signed_jwt('user-123')}".encode())],
         "client": ("10.0.0.1", 1234),
     }
-    assert jwt_subject(scope) == "user-123"
-    assert rate_limit_key(scope, trust_proxy_headers=False) == "sub:user-123"
+    subject = verified_subject(scope, settings)
+    assert subject == "user-123"
+    assert rate_limit_key(scope, subject=subject, trust_proxy_headers=False) == "sub:user-123"
 
-    anon = {
+    forged = {
         "type": "http",
-        "headers": [(b"authorization", b"Bearer junk")],
+        "headers": [(b"authorization", f"Bearer {_fake_jwt('user-123')}".encode())],
         "client": ("10.0.0.1", 1),
     }
-    assert rate_limit_key(anon, trust_proxy_headers=False) == "ip:10.0.0.1"
+    assert verified_subject(forged, settings) is None
+    junk = {
+        "type": "http",
+        "headers": [(b"authorization", b"Bearer junk")],
+        "client": ("1.1.1.1", 0),
+    }
+    assert verified_subject(junk, settings) is None
+    # Without SUPABASE_URL nothing can be verified, so everything is keyed by IP.
+    assert verified_subject(scope, _settings(supabase_url=None)) is None
 
     proxied = {
         "type": "http",
-        "headers": [(b"x-forwarded-for", b"203.0.113.9, 10.0.0.2")],
+        "headers": [(b"x-forwarded-for", b"198.51.100.1, 203.0.113.9")],
         "client": ("10.0.0.2", 1),
     }
-    assert rate_limit_key(proxied, trust_proxy_headers=True) == "ip:203.0.113.9"
-    assert rate_limit_key(proxied, trust_proxy_headers=False) == "ip:10.0.0.2"
+    # Only the right-most entry was written by the proxy; the rest is client-controlled.
+    assert rate_limit_key(proxied, subject=None, trust_proxy_headers=True) == "ip:203.0.113.9"
+    assert rate_limit_key(proxied, subject=None, trust_proxy_headers=False) == "ip:10.0.0.2"
 
 
 def test_token_bucket_refills() -> None:
@@ -235,7 +302,7 @@ def test_access_log_is_json_without_secrets(capsys: pytest.CaptureFixture[str]) 
     # Re-bind the JSON handler to this test's captured stdout.
     logging.getLogger("neurotrack.access").handlers.clear()
     client = _client(_settings())
-    token = _fake_jwt("alice")
+    token = _signed_jwt("alice")
     client.get("/health?token=leak", headers={"Authorization": f"Bearer {token}"})
     lines = [line for line in capsys.readouterr().out.splitlines() if '"neurotrack.access"' in line]
     assert lines, "expected a JSON access-log line on stdout"

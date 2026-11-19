@@ -36,15 +36,16 @@ class Settings(BaseSettings):
     # only meant for development.
     allowed_hosts: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["*"])
 
-    # Read the client IP from the first X-Forwarded-For entry. Only enable behind a proxy that
-    # overwrites that header (Render, Fly.io, Hugging Face Spaces all do); otherwise a client
-    # can pick its own rate-limit bucket.
+    # Read the client IP from the right-most X-Forwarded-For entry (the one the platform's proxy
+    # appended; entries to its left are client-supplied and ignored). Only enable behind a proxy,
+    # otherwise a client can pick its own rate-limit bucket.
     trust_proxy_headers: bool = False
 
     # Requests whose body is larger than this are rejected with 413.
     max_body_bytes: int = Field(default=2 * 1024 * 1024, ge=1)
 
-    # Token-bucket rate limiting, per client (JWT `sub` when present, otherwise client IP).
+    # Token-bucket rate limiting, per client: the `sub` of a Bearer token whose signature verifies
+    # against the Supabase JWKS, otherwise the client IP (forged tokens never choose a bucket).
     # `burst` is the bucket size, `per_minute` the sustained refill rate.
     rate_limit_enabled: bool = True
     rate_limit_burst: int = Field(default=60, ge=1)

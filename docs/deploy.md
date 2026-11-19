@@ -71,7 +71,7 @@ and a `HEALTHCHECK` on `/health`.
 | `SUPABASE_URL` | yes | `https://<ref>.supabase.co` |
 | `ENVIRONMENT` | yes (image default) | `production`: enables HSTS and refuses `ALLOWED_HOSTS=*` |
 | `ALLOWED_HOSTS` | yes | The API's host name(s), comma-separated, e.g. `neurotrack-api.onrender.com` |
-| `TRUST_PROXY_HEADERS` | behind a platform proxy | `true` on Render, Fly.io and Hugging Face Spaces |
+| `TRUST_PROXY_HEADERS` | behind a platform proxy | `true` on Render, Fly.io and Hugging Face Spaces. The API then uses the right-most `X-Forwarded-For` entry; if your platform chains several proxies, all unauthenticated callers may share one bucket (signed-in calls are keyed by their verified user id) |
 | `PORT` | set by most platforms | Port to listen on (default 8000) |
 | `WEB_CONCURRENCY` | no | uvicorn workers (default 1). Rate limits are per worker |
 | `NCBI_API_KEY` | no | Raises the PubMed E-utilities rate limit |

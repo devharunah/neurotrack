@@ -30,7 +30,8 @@ services:
       # if you add a custom domain). Required in production; "*" is refused.
       - key: ALLOWED_HOSTS
         sync: false
-      # Render's proxy sets X-Forwarded-For, so per-IP rate limiting uses the real client IP.
+      # Render's proxy appends to X-Forwarded-For; the API keys unauthenticated requests by the
+      # right-most entry.
       - key: TRUST_PROXY_HEADERS
         value: "true"
       # Rate limits are per worker; keep 1 on small instances.
