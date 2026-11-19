@@ -95,7 +95,7 @@ async def get_with_retries(
     sleep: Sleep = asyncio.sleep,
     limiter: RateLimiter | None = None,
 ) -> httpx.Response:
-    """GET with retries on 429, 5xx and transport errors. Raises UpstreamError when exhausted."""
+    """GET with retries on 429, 5xx and request errors. Raises UpstreamError when exhausted."""
     last_problem = "no attempt made"
     for attempt in range(policy.attempts):
         if limiter is not None:
@@ -104,7 +104,7 @@ async def get_with_retries(
         try:
             # The User-Agent is set per request so it holds whichever client is passed in.
             response = await http.get(url, params=dict(params), headers={"User-Agent": USER_AGENT})
-        except httpx.TransportError as exc:
+        except httpx.RequestError as exc:
             last_problem = f"{type(exc).__name__} contacting the service"
         else:
             if response.status_code == 429 or response.status_code >= 500:
