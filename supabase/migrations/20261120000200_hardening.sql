@@ -20,6 +20,7 @@
 -- 5. `join_study` now returns the study id with the pseudonym, so the app never has to look the
 --    study up by pseudonym (pseudonyms are unique only within one study). Changing the return type
 --    needs DROP + CREATE, so its grants are restated below.
+-- 6. Trigger functions lose their default EXECUTE grants, and M0's tables lose anon's privileges.
 --
 -- Every function is security definer with `set search_path = ''`, and every name is qualified.
 
@@ -338,12 +339,20 @@ $$;
 -- Function privileges
 -- ---------------------------------------------------------------------------------------------
 
--- Internal helpers: only ever called from inside the definer functions above.
+-- Internal helpers and trigger functions: never called directly by a client. (Triggers fire
+-- without an EXECUTE check; Supabase's default privileges grant EXECUTE to anon/authenticated.)
 revoke execute on function
   public.join_code_throttle(),
   public.record_failed_join_attempt(),
-  public.observations_before_insert()
+  public.observations_before_insert(),
+  public.handle_new_user(),
+  public.studies_add_owner_member(),
+  public.studies_guard_synthetic_switch(),
+  public.participants_match_study()
 from public, anon, authenticated;
+
+-- M0 relied on policies alone for anon; make it explicit like every later migration.
+revoke all on public.profiles, public.experiments from anon;
 
 revoke execute on function
   public.preview_study(text),
