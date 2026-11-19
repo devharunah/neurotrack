@@ -9,9 +9,16 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
-    ...devices["Desktop Chrome"],
     baseURL: "http://127.0.0.1:3000",
   },
+  projects: [
+    { name: "setup", testMatch: /auth\.setup\.ts/ },
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/user.json" },
+      dependencies: ["setup"],
+    },
+  ],
   webServer: {
     command: "pnpm build && pnpm start",
     url: "http://127.0.0.1:3000",

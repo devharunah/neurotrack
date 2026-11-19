@@ -7,7 +7,9 @@ from importlib.metadata import version
 
 from fastapi import FastAPI
 
+from app.behaviour.router import router as behaviour_router
 from app.quantum.router import router as quantum_router
+from app.research.router import router as research_router
 
 
 def create_app() -> FastAPI:
@@ -23,6 +25,8 @@ def create_app() -> FastAPI:
         return {"status": "ok", "qiskit": version("qiskit"), "qiskit_aer": version("qiskit-aer")}
 
     app.include_router(quantum_router)
+    app.include_router(behaviour_router)
+    app.include_router(research_router)
     return app
 
 

@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// Signed-out flows: start without the saved E2E session.
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test("the landing page introduces the three labs", async ({ page }) => {
   await page.goto("/");
 
