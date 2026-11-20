@@ -19,7 +19,8 @@
     "dev:api": "cd api && uv run uvicorn app.main:app --reload --port 8000",
     "dev:all": "concurrently -n web,api -c cyan,magenta \"pnpm dev\" \"pnpm dev:api\"",
     "api:openapi": "cd api && uv run python -c \"import json; from app.main import app; print(json.dumps(app.openapi(), indent=2))\" > openapi.json",
-    "api:types": "pnpm api:openapi && openapi-typescript api/openapi.json -o src/lib/api/schema.d.ts"
+    "api:types": "pnpm api:openapi && openapi-typescript api/openapi.json -o src/lib/api/schema.d.ts",
+    "brain:optimize": "node tools/brain-pipeline/optimize.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["@biomejs/biome", "unrs-resolver"],
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@gltf-transform/cli": "4.5.1",
     "@playwright/test": "^1.49.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
