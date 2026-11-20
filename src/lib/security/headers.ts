@@ -38,7 +38,14 @@ export function buildCsp({ supabaseUrl, isDev }: SecurityHeaderOptions): string 
   const supabase = supabaseOrigins(supabaseUrl);
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
-    "script-src": ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])],
+    // 'wasm-unsafe-eval' lets WebAssembly compile (the meshopt decoder for the NeuroLab brain
+    // model). It does not permit JS eval(); that stays dev-only for React's tooling.
+    "script-src": [
+      "'self'",
+      "'unsafe-inline'",
+      "'wasm-unsafe-eval'",
+      ...(isDev ? ["'unsafe-eval'"] : []),
+    ],
     // Recharts and React `style` props write inline styles.
     "style-src": ["'self'", "'unsafe-inline'"],
     // three.js textures and canvases use blob: and data: URLs.
