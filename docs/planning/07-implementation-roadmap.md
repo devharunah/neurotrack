@@ -120,6 +120,27 @@ Findings that change later phases:
 | E4 Independent code review + security review of the CSP change | Review notes |
 | E5 PR to `main` with screenshots and before/after | PR |
 
+**Status (2026-11-20): Phases D and E done.**
+
+- D: full-height dark stage; floating structure list (search, collapses below 1536px) and
+  information panel with panel-aware camera framing; phone layout with an expandable bottom
+  sheet; first-visit hint; atlas-colours toggle; view shortcuts 0–7; WebGL context-loss
+  restart; hydration placeholder; insula revealed through the lobes over it.
+- E1 tests: 200 Jest tests; full Playwright suite 32/32 (all labs, none skipped), including
+  phone layout, reduced motion, no-WebGL fallback, keyboard shortcuts, VTA honesty marker,
+  model load with no CSP violations and immutable caching of the hashed model.
+- E2 performance (local production build, Intel UHD 620 laptop GPU): 60 fps while rotating in
+  both modes, p95 frame 16.8 ms, **0 React commits during rotation**, model 938 KB over the
+  wire, ready 2.4 s after navigation. Phone emulation (390 px @2x, 4x CPU throttle): 60 / 53
+  fps, ready 9.2 s. With a selection, 0 draw calls while idle (on-demand rendering).
+  **Not measured:** a real phone GPU, and network latency (local server).
+- E3 accessibility: axe-core 4.10.3 on four states (desktop and phone) — 0 violations after
+  fixing caption, placeholder and heading contrast; keyboard paths covered by E2E.
+- E4 review: independent review found no critical issues; all must-fix and most low items
+  fixed (see the "address the independent review" commit). Left as follow-ups: scoping the CSP
+  change to `/neuro` only, returning focus after closing the panel, a motor-function reference
+  for the cerebellum, and startup time on slow phones (JS parse + BVH build).
+
 ## Parallelism and dependencies
 
 ```
