@@ -4,10 +4,6 @@
     "file": "/models/brain.2854616e53.glb",
     "bytes": 1439680
   },
-  "fallback": {
-    "file": "/models/brain-quantized.d45d18b491.glb",
-    "bytes": 3555900
-  },
   "axes": {
     "up": "+Y",
     "anterior": "+Z",

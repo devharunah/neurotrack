@@ -1,6 +1,6 @@
 # Brain model pipeline
 
-Builds `public/models/brain.<hash>.glb` (and a no-WebAssembly fallback) from the HRA / Allen
+Builds `public/models/brain.<hash>.glb` (plus an unpublished no-WebAssembly variant in `out/`) from the HRA / Allen
 reference brain. Background and decisions: `docs/planning/04-3d-model-strategy.md`.
 
 ## Rebuild

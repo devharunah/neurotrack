@@ -1,6 +1,6 @@
 # 3D brain model: attribution and licence
 
-`brain.*.glb` and `brain-quantized.*.glb` in this folder are **modified** versions of the
+`brain.*.glb` in this folder is a **modified** version of the
 Human Reference Atlas (HRA) 3D reference organ "Brain, Male", licensed under
 [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
 
@@ -30,4 +30,5 @@ Produced by `tools/brain-pipeline/` (see `structures.json` for the full mapping)
   vertex colours, then quantized and compressed (meshopt).
 
 The modified model is offered under the same licence, CC BY 4.0. These changes are ours; the
-original authors do not endorse NeuroTrack.
+original authors do not endorse NeuroTrack. As the licence states, the material is provided
+as-is, without warranties of any kind; see the licence text for the full disclaimer.

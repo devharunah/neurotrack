@@ -64,20 +64,18 @@ const REQUIRED_PARTS = [
 ];
 
 describe("brain model manifest", () => {
-  it.each([brainModel.model, brainModel.fallback])("$file exists with the recorded size", (m) => {
-    expect(statSync(join(ROOT, "public", m.file)).size).toBe(m.bytes);
+  it("points at a published model of the recorded size", () => {
+    const { file, bytes } = brainModel.model;
+    expect(statSync(join(ROOT, "public", file)).size).toBe(bytes);
   });
 
   it("keeps the compressed model within the 3 MB budget", () => {
     expect(brainModel.model.bytes).toBeLessThanOrEqual(MAX_MODEL_BYTES);
   });
 
-  it.each([brainModel.model.file, brainModel.fallback.file])(
-    "%s contains exactly the manifest's nodes",
-    (file) => {
-      expect(glbNodeNames(file)).toEqual(nodeNames);
-    },
-  );
+  it("publishes a model that contains exactly the manifest's nodes", () => {
+    expect(glbNodeNames(brainModel.model.file)).toEqual(nodeNames);
+  });
 
   it("names every node <side>_<part> with a part from structures.json", () => {
     for (const [name, node] of Object.entries(brainModel.nodes)) {
