@@ -28,6 +28,26 @@ selectable structures and attribution.
 - **Acceptance:** renders show no cracks or shards at default zoom; ≤ 3 MB; node contract test
   passes; validator clean.
 
+**Status (2026-11-20): done.** Gate 0 approved by the user (HRA model).
+
+| Result | Value |
+|---|---|
+| Source | HRA v1.3 brain (male), SHA-256 pinned; byte-identical to the v2.0 file |
+| Output | `public/models/brain.<hash>.glb` **1.37 MB** (meshopt) · fallback `brain-quantized.<hash>.glb` 3.4 MB (no WebAssembly) |
+| Geometry | 46 nodes, 214,105 triangles, normals + baked AO (`COLOR_0`), node extras `part/side/group/surface` |
+| Validation | Khronos validator: 0 errors, 0 warnings, both files; Jest contract test (9 cases) green |
+| Seams | Cortex lobes welded into 1–2 surfaces each; cerebellum, brainstem and corpus callosum joined across the midline and voxel-remeshed (0.3 mm) to remove cracks. Hairline lines remain only where lobes meet (real part boundaries) |
+
+Findings that change later phases:
+
+- **Two source labels are wrong.** `posteroventral_putamen` is a medial frontal gyrus above the
+  anterior cingulate (now in `prefrontal`); `frontal_pole` is an unidentified internal sheet
+  (excluded). Documented in `structures.json` → `source_label_issues`. The putamen is the
+  `putamen` mesh only.
+- **The VTA caveat stands:** the deep view will mark the VTA within `mid_midbrain_tegmentum`.
+- AO is baked per hemisphere, so the medial view (other hemisphere hidden) stays readable.
+- The CSP decision (Gate 0 item 2) is still open. Phase C can use either file.
+
 ## Phase B · Content model
 
 | Task | Deliverable |

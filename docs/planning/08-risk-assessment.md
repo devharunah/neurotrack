@@ -6,7 +6,7 @@ Likelihood / impact: L = low, M = medium, H = high.
 |---|---|---|---|---|
 | 1 | **Free3D model licence forbids public use** (likely, per Free3D/TurboSquid terms) | H | H | Do not commit or deploy it; it is git-ignored. Switch to the CC BY 4.0 HRA model. Ask the user to check the listing's licence badge. Confirm it is in no commit or branch |
 | 2 | **Attribution obligations of CC BY 4.0 missed** | L | M | `public/models/ATTRIBUTION.md`, an in-app credit line, and the modification notice. Verify the attribution text against the NIH 3D entry at release |
-| 3 | **Seams between atlas gyrus meshes stay visible** after joining | M | M | Merge by distance within lobes; recompute normals across the join; if cracks remain, shrink-wrap a thin seam strip or fill with a low-poly backing shell. Review six-view renders before shipping |
+| 3 | **Seams between atlas gyrus meshes stay visible** after joining (largely resolved in Phase A: welding + midline remesh) | L | M | Merge by distance within lobes; recompute normals across the join; if cracks remain, shrink-wrap a thin seam strip or fill with a low-poly backing shell. Review six-view renders before shipping |
 | 4 | **Decimation blurs gyri** (atlas cortex is the hero) | M | H | Per-group budgets (cortex gets the most); planar-aware collapse; compare renders before/after; keep the budget at 220k tris if visual quality needs it |
 | 5 | **Cerebellum looks too smooth** (atlas has lobules but no folia) | H | L | Optional tiling detail normal map for folia; acceptable as is for MVP |
 | 6 | **No separate VTA mesh** | H | M | Show the location within the midbrain tegmentum, explicitly labelled approximate; never present an invented boundary |
