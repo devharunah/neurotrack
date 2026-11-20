@@ -79,6 +79,22 @@ Findings that change later phases:
   page scroll on mobile.
 - **Acceptance:** scene criteria in [09](09-acceptance-criteria.md) §1–§3.
 
+**Status (2026-11-20): Phases B and C done.** Gate 0 items 2–3 approved (CSP
+`'wasm-unsafe-eval'`, dark stage).
+
+- B: 11 anatomy structures in `src/lib/content/brain-structures.ts`, 13 references resolved
+  with `tools/resolve_reference.py` (Crossref + PubMed); reward regions bound to atlas parts.
+- C: `src/lib/brain/` (catalog, store, deep links, views; Jest) and
+  `src/app/(app)/neuro/explorer/` (stage, model, shader material, camera rig, label, list,
+  panel, controls). Old schematic canvas removed.
+- Verified: 195 Jest tests, `pnpm check`/lint/typecheck, NeuroLab Playwright specs (6/6,
+  including model load with no CSP violations), visual review of 9 states (headless Chromium,
+  software WebGL).
+- Carried into Phase D: the info panel is still in the sidebar (not yet floating over the
+  stage / bottom sheet); camera framing does not yet offset for the panel; coach mark, view
+  shortcuts `1–7`, context-loss message and an atlas-colours toggle are not built; the VTA's
+  violet reads pale through the translucent neighbours.
+
 ## Phase D · Interface
 
 | Task | Deliverable |
