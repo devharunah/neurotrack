@@ -30,7 +30,10 @@
       ".claude/**",
       "api/**",
       "src/lib/api/schema.d.ts",
-      "supabase/**"
+      "supabase/**",
+      "assets-src/**",
+      "tools/brain-pipeline/out/**",
+      "e2e/.auth/**"
     ]
   }
 }

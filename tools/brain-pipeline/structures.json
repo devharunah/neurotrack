@@ -1,0 +1,303 @@
+{
+  "$comment": "Maps every mesh in the HRA / Allen reference brain to an exported part. Mesh names are listed without the 'Allen_' prefix and without the '_L' / '_R' suffix; each part is exported once per side (lh_ / rh_) unless it is midline. Lobe grouping follows standard gross-anatomy conventions (frontal: anterior to the central sulcus; parietal: postcentral to the parieto-occipital sulcus; temporal: below the lateral fissure; occipital: posterior to the parieto-occipital sulcus; insula: within the lateral fissure; limbic: cingulate and parahippocampal gyri). Group 'exclude' is not exported (reason given).",
+  "source": {
+    "name": "HRA reference organ: brain, male (Allen Human Reference Atlas 3D)",
+    "url": "https://raw.githubusercontent.com/hubmapconsortium/ccf-releases/main/v1.3/models/Allen_M_Brain.glb",
+    "sha256": "2b9ad5b53e40e9f0936da74f7be38d2eed15604e26358c3870a0ea13499b9a35",
+    "license": "CC BY 4.0",
+    "license_source": "https://3d.nih.gov/entries/20960"
+  },
+  "parts": {
+    "prefrontal": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": [
+        "superior_frontal_gyrus",
+        "middle_frontal_gyrus",
+        "inferior_frontal_gyrus_opercular_part",
+        "inferior_frontal_gyrus_triangular_part",
+        "frontal_operculum",
+        "frontomarginal_gyrus",
+        "gyrus_rectus_straight_gyrus",
+        "lateral_orbital_gyrus",
+        "medial_orbital_gyrus",
+        "anterior_intermediate_orbital_gyrus",
+        "posterior_intermediate_orbital_gyrus",
+        "rostral_gyrus",
+        "paracingulate_gyrus",
+        "posteroventral_putamen"
+      ]
+    },
+    "motor_frontal": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": ["precentral_gyrus", "paracentral_lobule_rostral_part"]
+    },
+    "parietal": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": [
+        "postcentral_gyrus",
+        "supraparietal_lobule",
+        "supramarginal_gyrus",
+        "angular_gyrus",
+        "precuneus",
+        "paracentral_lobule_caudal_part",
+        "parietal_operculum"
+      ]
+    },
+    "temporal": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": [
+        "superior_temporal_gyrus",
+        "middle_temporal_gyrus",
+        "inferior_temporal_gyrus",
+        "temporal_pole",
+        "transverse_temporal_gyrus_Heschls_gyrus",
+        "planum_polare",
+        "planum_temporale",
+        "occipitotemporal_fusiform_gyrus_temporal_part",
+        "perirhinal_gyrus_rostral_part_of_FuGt"
+      ]
+    },
+    "occipital": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": [
+        "cuneus",
+        "lingual_gyrus_medial_occipitotemporal_gyrus",
+        "superior_occipital_gyrus",
+        "inferior_occipital_gyrus",
+        "occipital_pole",
+        "lateral_occipitotemporal_fusiform_gyrus_occipital_part"
+      ]
+    },
+    "insula": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": [
+        "long_insular_gyri",
+        "short_insular_gyri",
+        "limen_insula",
+        "frontal_agranular_insular_cortex_area_Fl",
+        "temporal_agranular_insular_cortex_area_Tl"
+      ]
+    },
+    "anterior_cingulate": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": ["cingulate_gyrus_rostral_anterior_part", "subcallosal_gyrus_parolfactory_gyrus"]
+    },
+    "limbic_posterior": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": [
+        "cingulate_gyrus_caudal_posterior_part",
+        "ingulo_parahippocampal_isthmus",
+        "anterior_parahippocampal_gyrus",
+        "posterior_parahippocampal_gyrus",
+        "gyrus_ambiens"
+      ]
+    },
+    "olfactory": {
+      "group": "cortex",
+      "surface": true,
+      "meshes": [
+        "olfactory_bulb",
+        "olfactory_tract",
+        "anterior_olfactory_nucleus",
+        "lateral_olfactory_gyrus",
+        "piriform_region"
+      ]
+    },
+    "cerebellum": {
+      "group": "cerebellum",
+      "surface": true,
+      "meshes": [
+        "lateral_hemisphere_of_cerebellum",
+        "paravermis_of_cerebellum",
+        "cerebellar_vermis"
+      ],
+      "midline": true,
+      "remesh": true
+    },
+    "midbrain": {
+      "group": "brainstem",
+      "surface": true,
+      "meshes": [
+        "cerebral_peduncle_crus_cerebri",
+        "superior_colliculus",
+        "inferior_colliculus",
+        "pretectal_region",
+        "red_nucleus"
+      ],
+      "midline": true,
+      "remesh": true
+    },
+    "midbrain_tegmentum": {
+      "group": "brainstem",
+      "surface": true,
+      "meshes": ["midbrain_tegmentum"],
+      "midline": true
+    },
+    "pons": {
+      "group": "brainstem",
+      "surface": true,
+      "meshes": [
+        "basilar_part_of_pons",
+        "pontine_tegmentum",
+        "middle_cerebellar_peduncle",
+        "superior_cerebellar_peduncle_brachium_conjunctivum"
+      ],
+      "midline": true,
+      "remesh": true
+    },
+    "medulla": {
+      "group": "brainstem",
+      "surface": true,
+      "meshes": [
+        "tegmentum_of_medulla_oblongata",
+        "pyramidal_part_of_medulla_oblongata",
+        "inferior_olive",
+        "inferior_cerebellar_peduncle"
+      ],
+      "midline": true,
+      "remesh": true
+    },
+    "corpus_callosum": {
+      "group": "commissure",
+      "surface": true,
+      "meshes": ["corpus_callosum"],
+      "midline": true,
+      "remesh": true
+    },
+    "optic_chiasm": {
+      "group": "other",
+      "surface": true,
+      "midline": true,
+      "meshes": ["VH_M_optic_chiasm"]
+    },
+    "thalamus": {
+      "group": "diencephalon",
+      "surface": false,
+      "meshes": [
+        "thalamus",
+        "anterior_nuclear_complex_of_thalamus",
+        "centromedian_nucleus_of_thalamus",
+        "lateral_dorsal_nucleus_of_thalamus",
+        "lateral_posterior_nucleus_of_thalamus",
+        "mediodorsal_nucleus_of_thalamus",
+        "midline_nuclear_complex",
+        "parafascicular_nucleus_of_thalamus",
+        "pulvinar_of_thalamus",
+        "reuniens_nucleus_medioventral_nucleus_of_thalamus",
+        "ventral_anterior_nucleus_of_thalamus",
+        "ventral_lateral_nucleus_of_thalamus",
+        "ventral_posterior_lateral_nucleus",
+        "ventral_posterior_medial_nucleus",
+        "dorsal_lateral_geniculate_nucleus",
+        "medial_geniculate_nuclei",
+        "habenular_nuclei"
+      ]
+    },
+    "hypothalamus": {
+      "group": "diencephalon",
+      "surface": false,
+      "meshes": [
+        "hypothalamus",
+        "mammillary_region_of_HTH",
+        "preoptic_region_of_HTH",
+        "supraoptic_region_of_HTH",
+        "tuberal_region_of_HTH"
+      ],
+      "midline": true
+    },
+    "caudate": {
+      "group": "basal_ganglia",
+      "surface": false,
+      "meshes": ["head_of_caudate", "body_of_caudate", "tail_of_caudate"]
+    },
+    "putamen": {
+      "group": "basal_ganglia",
+      "surface": false,
+      "meshes": ["putamen"]
+    },
+    "globus_pallidus": {
+      "group": "basal_ganglia",
+      "surface": false,
+      "meshes": ["external_segment_of_globus_pallidus", "internal_segment_of_globus_pallidus"]
+    },
+    "nucleus_accumbens": {
+      "group": "basal_ganglia",
+      "surface": false,
+      "meshes": ["nucleus_accumbens"]
+    },
+    "subthalamic_nucleus": {
+      "group": "basal_ganglia",
+      "surface": false,
+      "meshes": ["subthalamic_nucleus"]
+    },
+    "substantia_nigra": {
+      "group": "brainstem",
+      "surface": false,
+      "meshes": ["substantia_nigra"]
+    },
+    "amygdala": {
+      "group": "limbic_deep",
+      "surface": false,
+      "meshes": [
+        "amygdaloid_complex",
+        "basolateral_nucleus_basal_nucleus",
+        "basomedial_nucleus_accessory_basal_nucleus",
+        "lateral_nucleus",
+        "medial_nucleus",
+        "central_nuclear_group",
+        "anterior_cortical_nucleus",
+        "posterior_cortical_nucleus",
+        "anterior_amygdaloid_area",
+        "amygdalohippocampal_area"
+      ]
+    },
+    "hippocampus": {
+      "group": "limbic_deep",
+      "surface": false,
+      "meshes": ["head_of_hippocampus", "body_of_hippocampus", "tail_of_hippocampus"]
+    },
+    "basal_forebrain": {
+      "group": "limbic_deep",
+      "surface": false,
+      "meshes": ["basal_forebrain", "septal_nuclei", "bed_nucleus_of_stria_terminalis"]
+    }
+  },
+  "exclude": {
+    "white_matter_of_forebrain": "Inner white-matter shell beneath the cortex; invisible in the assembled brain and would hide deep structures in reward mode",
+    "white_matter_of_hindbrain": "Inner white-matter volume of cerebellum/brainstem; not visible from outside",
+    "cerebellar_deep_nuclei": "Fully internal to the cerebellum; out of MVP scope",
+    "claustrum": "Thin internal sheet; out of MVP scope",
+    "anterior_commissure": "Tract; out of MVP scope",
+    "fornix": "Tract; candidate for the Phase 2 pathways view",
+    "optic_radiation": "Tract; out of MVP scope",
+    "optic_tract": "Tract; out of MVP scope",
+    "mammillothalamic_tract": "Tract; out of MVP scope",
+    "zona_incerta": "Small internal nucleus; out of MVP scope",
+    "pineal_body": "Small internal structure; out of MVP scope",
+    "anterior_horn_of_lateral_ventricle": "Ventricles: out of MVP scope (candidate later layer)",
+    "body_of_lateral_ventricle": "Ventricles",
+    "atrium_of_lateral_ventricle": "Ventricles",
+    "posterior_horn_of_lateral_ventricle": "Ventricles",
+    "inferior_horn_of_lateral_ventricle": "Ventricles",
+    "third_ventricle": "Ventricles",
+    "fourth_ventricle": "Ventricles",
+    "cerebral_aqueduct": "Ventricles",
+    "central_canal_of_medulla_oblongata": "Ventricles",
+    "frontal_pole": "Source label does not match geometry: an internal lateral sheet running posterior from the level of the putamen, not visible from outside and not at the frontal pole. Identity unverified, so excluded."
+  },
+  "source_label_issues": {
+    "$comment": "Checked on 2026-11-20 with tools/brain-pipeline/highlight_meshes.py renders. Meshes are reassigned by what their geometry shows, never by guessing a new name.",
+    "posteroventral_putamen": "Geometry is a medial cortical gyrus directly above the anterior cingulate gyrus (paracingulate position), visible on the medial surface. Exported as part of 'prefrontal'; not used as putamen.",
+    "paracingulate_gyrus": "Geometry sits at the anterior tip of the frontal lobe (frontal pole region). Remains in 'prefrontal', which is correct for either identity.",
+    "frontal_pole": "See exclude.frontal_pole."
+  },
+  "$comment_flags": "'midline': left and right source meshes are joined into one 'mid_' node. 'remesh': the joined part is voxel-remeshed (0.3 mm) to close gaps between source meshes that merging by distance cannot weld."
+}

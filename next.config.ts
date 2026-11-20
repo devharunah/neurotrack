@@ -24,6 +24,12 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: securityHeaders({ isDev, ...(supabaseUrl ? { supabaseUrl } : {}) }),
       },
+      {
+        // The brain model's file name carries a content hash (tools/brain-pipeline), so a
+        // changed model gets a new URL and the old one can be cached for good.
+        source: "/models/:file(brain\\.[0-9a-f]{10}\\.glb)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
     ];
   },
 };

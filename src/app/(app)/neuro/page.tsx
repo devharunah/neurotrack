@@ -14,9 +14,9 @@ export default function NeuroLabPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">NeuroLab</h1>
           <p className="mt-2 max-w-3xl leading-7 text-ink-soft">
-            Explore six brain regions that research on reward, learning and addiction returns to
-            again and again. Select a region for a short summary, then open its page for the
-            anatomy, its role in learning and the reviews the text is drawn from.
+            Explore a 3D brain built from an anatomical reference atlas. Start with the lobes and
+            major structures, then switch to the reward circuit to see the regions that research on
+            reward, learning and addiction returns to, each with the reviews its text is drawn from.
           </p>
         </div>
         <Link
@@ -30,8 +30,9 @@ export default function NeuroLabPage() {
       <BrainExplorer />
 
       <Disclaimer>
-        The 3D brain is a simplified teaching model, not an anatomical atlas or a scan. Region
-        summaries describe research findings and say nothing about any individual.
+        The 3D brain is derived from a reference atlas of one adult brain and simplified for
+        teaching (parts grouped, smoothed and reduced in detail). It is not a scan of any person.
+        Summaries describe research findings and say nothing about any individual.
       </Disclaimer>
     </div>
   );

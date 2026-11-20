@@ -22,3 +22,9 @@ logs/
 
 # Playwright saved sessions
 e2e/.auth/
+
+# 3D brain pipeline inputs and intermediates. Source models are downloaded (pinned by hash)
+# or, for the Free3D OBJ, unlicensed; only the published CC BY model in public/models/ is
+# committed.
+assets-src/
+tools/brain-pipeline/out/

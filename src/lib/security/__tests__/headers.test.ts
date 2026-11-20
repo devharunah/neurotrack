@@ -26,10 +26,16 @@ describe("supabaseOrigins", () => {
 });
 
 describe("buildCsp", () => {
+  it("lets WebAssembly compile (meshopt model decoder) but not JS eval", () => {
+    const csp = buildCsp({ isDev: false });
+    expect(csp).toContain("script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval';");
+  });
+
   it("allows Supabase in connect-src and never eval in production", () => {
     const csp = buildCsp({ supabaseUrl: SUPABASE, isDev: false });
     expect(csp).toContain(`connect-src 'self' ${SUPABASE} wss://abcd.supabase.co`);
-    expect(csp).not.toContain("unsafe-eval");
+    // Quoted, so `'wasm-unsafe-eval'` (allowed below) does not count as JS eval.
+    expect(csp).not.toContain("'unsafe-eval'");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("worker-src 'self' blob:");

@@ -1,205 +1,247 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { Component, type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
-import { BRAIN_REGIONS, getBrainRegion, regionSummary } from "@/lib/content/brain-regions";
+import type { ExplorerStore } from "@/lib/brain/explorer-store";
 
+import { CoachMark } from "./explorer/coach-mark";
+import {
+  ExplorerProvider,
+  useDeepLink,
+  useExplorer,
+  useExplorerStore,
+} from "./explorer/explorer-context";
+import { GLASS, InfoPanel, SelectionAnnouncer } from "./explorer/info-panel";
+import {
+  Caption,
+  ContextLostOverlay,
+  DesktopListToggle,
+  LoadingIndicator,
+  MobileSheet,
+  STAGE_BACKGROUND,
+  SceneBoundary,
+  Stage,
+  StageMessage,
+  WebglNotice,
+  clearModelCache,
+} from "./explorer/stage-chrome";
+import { ModeSwitch, StructureList } from "./explorer/structure-list";
+import { useKeyboardShortcuts } from "./explorer/use-keyboard-shortcuts";
+import { useIsDesktop, useIsWide } from "./explorer/use-media-query";
+import { ViewerControls } from "./explorer/viewer-controls";
 import { usePrefersReducedMotion, useWebglSupport } from "./use-client-env";
 
-function CanvasPlaceholder({ text }: { text: string }) {
-  return (
-    <div className="flex h-full items-center justify-center text-sm text-white/70">{text}</div>
-  );
-}
+/** Widths (px) of the floating panels; the camera frames the brain in the space between. */
+const LIST_WIDTH = 236;
+const PANEL_WIDTH = 344;
+const PANEL_MARGIN = 12;
+/** Height (px) of the collapsed mobile sheet. */
+const SHEET_PEEK = 136;
 
-const BrainCanvas = dynamic(() => import("./brain-canvas"), {
-  ssr: false,
-  loading: () => <CanvasPlaceholder text="Loading 3D brain…" />,
-});
-
-/** Falls back to the region list if the 3D scene throws (for example, a lost WebGL context). */
-class SceneBoundary extends Component<
-  { fallback: ReactNode; children: ReactNode },
-  { failed: boolean }
-> {
-  override state = { failed: false };
-
-  static getDerivedStateFromError(): { failed: boolean } {
-    return { failed: true };
-  }
-
-  override render() {
-    return this.state.failed ? this.props.fallback : this.props.children;
-  }
-}
-
-function WebglNotice() {
-  return (
-    <p
-      className="rounded-xl border border-line bg-card p-4 text-sm leading-6 text-ink-soft"
-      data-testid="webgl-fallback"
-    >
-      3D graphics (WebGL) are not available in this browser, so the brain model is hidden. Every
-      region is still available from the list.
-    </p>
-  );
-}
-
-function RegionList({
-  selected,
-  onSelect,
-  onHover,
+/** The 3D stage itself plus its overlays, shared by the desktop and mobile layouts. */
+function StageArea({
+  reducedMotion,
+  className,
+  onTouched,
+  children,
 }: {
-  selected: string | null;
-  onSelect: (slug: string) => void;
-  onHover: (slug: string | null) => void;
+  reducedMotion: boolean;
+  className: string;
+  onTouched: () => void;
+  children: ReactNode;
 }) {
-  return (
-    <nav aria-label="Brain regions">
-      <h2 className="text-sm font-semibold">Regions</h2>
-      <ul className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-        {BRAIN_REGIONS.map((region) => {
-          const isSelected = selected === region.slug;
-          return (
-            <li key={region.slug}>
-              <button
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => onSelect(region.slug)}
-                onMouseEnter={() => onHover(region.slug)}
-                onMouseLeave={() => onHover(null)}
-                onFocus={() => onHover(region.slug)}
-                onBlur={() => onHover(null)}
-                className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                  isSelected
-                    ? "border-neuro bg-neuro-soft font-medium text-neuro"
-                    : "border-line bg-card hover:bg-paper"
-                }`}
-              >
-                <span
-                  aria-hidden="true"
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: region.explorer.color }}
-                />
-                <span className="min-w-0">{region.name}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
-}
+  const store = useExplorerStore();
+  const [attempt, setAttempt] = useState(0);
+  const mode = useExplorer((state) => state.mode);
+  const modelReady = useExplorer((state) => state.modelReady);
+  const contextLost = useExplorer((state) => state.contextLost);
+  const retry = () => {
+    store.setContextLost(false);
+    void clearModelCache().finally(() => setAttempt((n) => n + 1));
+  };
 
-function RegionPanel({ slug }: { slug: string | null }) {
-  const region = slug ? getBrainRegion(slug) : undefined;
   return (
-    <section
-      aria-labelledby="region-panel-heading"
-      aria-live="polite"
-      className="rounded-2xl border border-line bg-card p-5"
-      data-testid="region-panel"
+    <div
+      data-testid="brain-canvas"
+      data-mode={mode}
+      data-ready={modelReady}
+      onPointerDownCapture={onTouched}
+      className={`relative touch-none overflow-hidden rounded-2xl ${STAGE_BACKGROUND} ${className}`}
     >
-      {region ? (
-        <>
-          <div className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-3 shrink-0 rounded-full"
-              style={{ backgroundColor: region.explorer.color }}
-            />
-            <h2 id="region-panel-heading" className="font-semibold">
-              {region.name}
-            </h2>
-            <span className="rounded bg-neuro-soft px-1.5 py-0.5 font-mono text-[11px] text-neuro">
-              {region.abbreviation}
-            </span>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-ink-soft">{regionSummary(region)}</p>
-          <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">
-            Primary functions
-          </h3>
-          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm leading-6 text-ink-soft">
-            {region.primaryFunctions.slice(0, 3).map((fn) => (
-              <li key={fn}>{fn}</li>
-            ))}
-          </ul>
-          <Link
-            href={`/neuro/regions/${region.slug}`}
-            className="mt-4 inline-block text-sm font-medium text-neuro hover:underline"
-          >
-            Read more about the {region.name.toLowerCase()} →
-          </Link>
-        </>
-      ) : (
-        <>
-          <h2 id="region-panel-heading" className="font-semibold">
-            Pick a region
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-ink-soft">
-            Click a glowing region in the model, or choose one from the list, to see a summary and
-            its sourced references.
-          </p>
-        </>
-      )}
-    </section>
-  );
-}
-
-export function BrainExplorer() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const reducedMotion = usePrefersReducedMotion();
-  const webgl = useWebglSupport();
-
-  const sidebar = (
-    <div className="space-y-4">
-      <RegionList selected={selected} onSelect={setSelected} onHover={setHovered} />
-      <RegionPanel slug={selected} />
+      <SceneBoundary key={attempt} onRetry={retry}>
+        <Stage reducedMotion={reducedMotion} />
+      </SceneBoundary>
+      <LoadingIndicator />
+      {contextLost && <ContextLostOverlay onRestart={retry} />}
+      {children}
     </div>
   );
+}
 
-  if (webgl === false) {
+interface LayoutProps {
+  store: ExplorerStore;
+  reducedMotion: boolean;
+  selected: string | null;
+  coachSuppressed: boolean;
+  onTouched: () => void;
+}
+
+function DesktopExplorer({
+  store,
+  reducedMotion,
+  selected,
+  coachSuppressed,
+  onTouched,
+}: LayoutProps) {
+  const isWide = useIsWide();
+  const [listChoice, setListChoice] = useState<boolean | null>(null);
+  const listOpen = listChoice ?? isWide;
+
+  // Tell the camera which parts of the stage the floating panels cover.
+  useEffect(() => {
+    store.setInsets({
+      left: listOpen ? LIST_WIDTH + PANEL_MARGIN : 0,
+      right: selected ? PANEL_WIDTH + PANEL_MARGIN : 0,
+      bottom: 0,
+    });
+  }, [store, listOpen, selected]);
+
+  return (
+    <div className="space-y-3">
+      <ModeSwitch />
+      <StageArea
+        reducedMotion={reducedMotion}
+        onTouched={onTouched}
+        className="h-[calc(100dvh-17rem)] min-h-[520px]"
+      >
+        {listOpen ? (
+          <div
+            className={`absolute bottom-20 left-3 top-3 z-10 overflow-y-auto rounded-2xl p-4 ${GLASS}`}
+            style={{ width: LIST_WIDTH }}
+          >
+            <DesktopListToggle open onToggle={() => setListChoice(false)} />
+            <StructureList />
+          </div>
+        ) : (
+          <DesktopListToggle open={false} onToggle={() => setListChoice(true)} />
+        )}
+        <div
+          className={`absolute right-3 top-3 z-10 ${selected ? "bottom-3" : ""}`}
+          style={{ width: PANEL_WIDTH }}
+        >
+          <InfoPanel className={selected ? "h-full overflow-y-auto" : ""} />
+        </div>
+        <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex flex-col items-start gap-2">
+          <CoachMark suppressed={coachSuppressed} />
+          <div className="pointer-events-auto">
+            <ViewerControls reducedMotion={reducedMotion} />
+          </div>
+        </div>
+      </StageArea>
+      <Caption reducedMotion={reducedMotion} />
+    </div>
+  );
+}
+
+function MobileExplorer({
+  store,
+  reducedMotion,
+  selected,
+  coachSuppressed,
+  onTouched,
+}: LayoutProps) {
+  // Expanded for one selection only: a new selection starts collapsed again.
+  const [expandedFor, setExpandedFor] = useState<string | null>(null);
+  const expanded = selected !== null && expandedFor === selected;
+
+  useEffect(() => {
+    store.setInsets({ left: 0, right: 0, bottom: selected && !expanded ? SHEET_PEEK : 0 });
+  }, [store, selected, expanded]);
+
+  return (
+    <div className={`space-y-3 ${selected ? "pb-40" : ""}`}>
+      <ModeSwitch />
+      <StageArea
+        reducedMotion={reducedMotion}
+        onTouched={onTouched}
+        className="h-[62dvh] min-h-[380px]"
+      >
+        <div className="pointer-events-none absolute inset-x-2 bottom-3 z-10 flex flex-col items-center gap-2">
+          <CoachMark suppressed={coachSuppressed} />
+          <div className="pointer-events-auto max-w-full overflow-x-auto">
+            <ViewerControls reducedMotion={reducedMotion} />
+          </div>
+        </div>
+      </StageArea>
+      <Caption reducedMotion={reducedMotion} />
+      <StructureList className={`rounded-2xl p-4 ${GLASS}`} />
+      {!selected && <InfoPanel />}
+      {selected && (
+        <MobileSheet
+          expanded={expanded}
+          onToggle={() => setExpandedFor(expanded ? null : selected)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ExplorerLayout() {
+  const store = useExplorerStore();
+  const reducedMotion = usePrefersReducedMotion();
+  const webgl = useWebglSupport();
+  const isDesktop = useIsDesktop();
+  const [touched, setTouched] = useState(false);
+  const selected = useExplorer((state) => state.selected);
+  useDeepLink(store);
+  useKeyboardShortcuts(store, true);
+
+  // Until hydration settles WebGL support and the breakpoint, show one neutral placeholder,
+  // so desktop users never see the mobile layout flash in first.
+  if (webgl === "pending") {
     return (
-      <div className="space-y-4">
-        <WebglNotice />
-        {sidebar}
+      <div className="space-y-3">
+        <ModeSwitch />
+        <div
+          className={`h-[62dvh] min-h-[380px] rounded-2xl lg:h-[calc(100dvh-17rem)] lg:min-h-[520px] ${STAGE_BACKGROUND}`}
+        >
+          <StageMessage>Loading 3D brain…</StageMessage>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="min-w-0">
-        <div
-          className="relative h-[340px] overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_center,_#1e2c44_0%,_#0f1b2d_70%)] sm:h-[460px] lg:h-[560px]"
-          data-testid="brain-canvas"
-        >
-          <SceneBoundary fallback={<CanvasPlaceholder text="The 3D view could not start." />}>
-            {webgl === "pending" ? (
-              <CanvasPlaceholder text="Loading 3D brain…" />
-            ) : (
-              <BrainCanvas
-                selected={selected}
-                hovered={hovered}
-                reducedMotion={reducedMotion}
-                onSelect={setSelected}
-                onHover={setHovered}
-              />
-            )}
-          </SceneBoundary>
-        </div>
-        <p className="mt-2 text-xs leading-5 text-muted">
-          Schematic model: shapes and positions are approximate and for orientation only. Bilateral
-          structures appear in both hemispheres. Drag to rotate, scroll or pinch to zoom.
-          {reducedMotion
-            ? " Auto-rotation is off because your system asks for reduced motion."
-            : ""}
-        </p>
+  if (webgl === false) {
+    return (
+      <div className="space-y-4">
+        <SelectionAnnouncer />
+        <ModeSwitch />
+        <WebglNotice />
+        <StructureList className={`rounded-2xl p-4 ${GLASS}`} />
+        <InfoPanel />
       </div>
-      {sidebar}
-    </div>
+    );
+  }
+
+  const props: LayoutProps = {
+    store,
+    reducedMotion,
+    selected,
+    coachSuppressed: touched || selected !== null,
+    onTouched: () => setTouched(true),
+  };
+  return (
+    <>
+      <SelectionAnnouncer />
+      {isDesktop ? <DesktopExplorer {...props} /> : <MobileExplorer {...props} />}
+    </>
+  );
+}
+
+export function BrainExplorer() {
+  return (
+    <ExplorerProvider>
+      <ExplorerLayout />
+    </ExplorerProvider>
   );
 }
