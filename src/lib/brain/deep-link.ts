@@ -3,7 +3,7 @@
  * Unknown or inconsistent values are dropped rather than trusted.
  */
 import { type ExplorerMode, getExplorerItem } from "./catalog";
-import { type ViewPresetId, isViewPresetId } from "./views";
+import { MENU_VIEWS, type ViewPresetId, isViewPresetId } from "./views";
 
 export interface ExplorerLink {
   mode: ExplorerMode;
@@ -23,7 +23,7 @@ export function parseExplorerLink(search: string): ExplorerLink {
     mode = getExplorerItem("deep", slug) ? "deep" : mode;
   }
   const selected = slug && getExplorerItem(mode, slug) ? slug : null;
-  const view = rawView && isViewPresetId(rawView) ? rawView : null;
+  const view = rawView && isViewPresetId(rawView) && MENU_VIEWS.includes(rawView) ? rawView : null;
   return { mode, selected, view };
 }
 

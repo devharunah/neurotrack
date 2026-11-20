@@ -5,6 +5,7 @@ import { Html } from "@react-three/drei";
 import { MODEL_NODES, getExplorerItem } from "@/lib/brain/catalog";
 
 import { useExplorer } from "./explorer-context";
+import { displayName } from "./info-panel";
 
 /** Name tag pinned to the selected structure (at its pipeline-computed anchor point). */
 export function SelectionLabel() {
@@ -32,7 +33,7 @@ export function SelectionLabel() {
         />
         <span className="h-px w-6 bg-white/60" />
         <span className="whitespace-nowrap rounded-md border border-white/15 bg-[#0b1424]/85 px-2.5 py-1 text-xs font-medium text-white shadow-lg backdrop-blur">
-          {item.name}
+          {displayName(item)}
         </span>
       </div>
     </Html>

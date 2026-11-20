@@ -33,6 +33,8 @@ describe("explorer deep links", () => {
       selected: null,
       view: null,
     });
+    // Only views offered in the view menu are accepted.
+    expect(parseExplorerLink("?view=front-left").view).toBeNull();
     // An explicit mode wins over the slug's mode.
     expect(parseExplorerLink("?mode=structures&s=amygdala").selected).toBeNull();
   });

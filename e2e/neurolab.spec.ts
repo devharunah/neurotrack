@@ -80,6 +80,18 @@ test.describe("signed in", () => {
     expect(await doiLinks.count()).toBeGreaterThanOrEqual(2);
   });
 
+  test("the VTA is marked as an approximate location", async ({ page }) => {
+    await page.goto("/neuro?mode=deep&s=ventral-tegmental-area");
+    await openStructureList(page);
+    const panel = page.getByTestId("region-panel");
+    await expect(panel.getByText("Approximate location", { exact: true })).toBeVisible();
+    await expect(
+      page
+        .getByRole("navigation", { name: "Deep structures" })
+        .getByRole("button", { name: "Ventral tegmental area (approx.)" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   test("a deep link opens an anatomy structure with sourced content", async ({ page }) => {
     await page.goto("/neuro?s=cerebellum");
     await openStructureList(page);
@@ -116,6 +128,18 @@ test.describe("signed in", () => {
     });
     await expect(page.getByTestId("brain-canvas").locator("canvas")).toBeVisible();
     expect(violations).toEqual([]);
+
+    // The model's file name is content-hashed, so it is cached as immutable.
+    const modelUrl = await page.evaluate(
+      () =>
+        performance
+          .getEntriesByType("resource")
+          .map((entry) => entry.name)
+          .find((name) => /\/models\/brain\.[0-9a-f]{10}\.glb$/.test(name)) ?? "",
+    );
+    expect(modelUrl).not.toBe("");
+    const response = await page.request.get(modelUrl);
+    expect(response.headers()["cache-control"]).toContain("immutable");
   });
 
   test("keyboard shortcuts change the view and search filters the list", async ({ page }) => {

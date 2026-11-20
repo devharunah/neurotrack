@@ -19,6 +19,13 @@ describe("explorer store", () => {
     expect(store.getState().hiddenSide).toBeNull();
   });
 
+  it("resets the menu view on selection, so a shared link cannot carry a stale view", () => {
+    const store = createExplorerStore();
+    store.setView("medial-left");
+    store.select("cerebellum");
+    expect(store.getState()).toMatchObject({ view: "default", hiddenSide: null });
+  });
+
   it("keeps the selection across modes only when it exists in both", () => {
     const store = createExplorerStore();
     store.select("cerebellum");

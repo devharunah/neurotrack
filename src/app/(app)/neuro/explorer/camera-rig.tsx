@@ -52,11 +52,16 @@ export function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
     speed: 0,
   });
   const animate = !reducedMotion;
+  /** Distance the camera is heading to (camera-controls reports where a tween started). */
+  const lastDistance = useRef(DEFAULT_DISTANCE);
 
   const goTo = useCallback(
     (view: ViewPreset, target: Vec3, distance: number, transition = animate) => {
       const controls = ref.current;
       if (!controls) return;
+      // Stop any auto-rotation now: a rotate() during the tween would snap its angle.
+      motion.current.speed = 0;
+      lastDistance.current = distance;
       const [x, y, z] = viewPosition(view, target, distance);
       void controls.setLookAt(x, y, z, target[0], target[1], target[2], transition);
       const [fx, fy] = focalOffsetForInsets(
@@ -108,7 +113,11 @@ export function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
         previousInsets = insets;
         const controls = ref.current;
         if (controls) {
-          const [fx, fy] = focalOffsetForInsets(insets, controls.distance, getThree().size.height);
+          const [fx, fy] = focalOffsetForInsets(
+            insets,
+            lastDistance.current,
+            getThree().size.height,
+          );
           void controls.setFocalOffset(fx, fy, 0, animate);
         }
       }
@@ -122,6 +131,10 @@ export function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
       if (command.type === "view") goTo(VIEW_PRESETS[command.view], ORIGIN, DEFAULT_DISTANCE);
       if (command.type === "zoom" && controls) {
         void controls.dolly(command.direction * 0.6, animate);
+        lastDistance.current = Math.min(
+          MAX_DISTANCE,
+          Math.max(MIN_DISTANCE, lastDistance.current - command.direction * 0.6),
+        );
         motion.current.lastInput = performance.now() / 1000;
       }
     });

@@ -8,7 +8,7 @@ import { CAMERA_FOV_DEG, DEFAULT_DISTANCE } from "@/lib/brain/views";
 
 import { BrainModel } from "./brain-model";
 import { CameraRig } from "./camera-rig";
-import { useExplorerStore } from "./explorer-context";
+import { useExplorer, useExplorerStore } from "./explorer-context";
 import { SelectionLabel } from "./selection-label";
 
 function Lights() {
@@ -28,13 +28,18 @@ function Lights() {
  */
 export default function Stage({ reducedMotion }: { reducedMotion: boolean }) {
   const store = useExplorerStore();
+  const paused = useExplorer((state) => state.paused);
+  const selected = useExplorer((state) => state.selected);
+  const rotating = !reducedMotion && !paused && selected === null;
   const [dpr, setDpr] = useState<number | [number, number]>([1, 2]);
 
   return (
     <Canvas
       camera={{ fov: CAMERA_FOV_DEG, near: 0.05, far: 50, position: [0, 0, DEFAULT_DISTANCE] }}
       dpr={dpr}
-      frameloop={reducedMotion ? "demand" : "always"}
+      // Render continuously only while auto-rotation can run; otherwise render on demand
+      // (input, camera tweens and highlight transitions request frames), saving battery.
+      frameloop={rotating ? "always" : "demand"}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       onPointerMissed={(event) => {
         if (event.type === "click") store.select(null);

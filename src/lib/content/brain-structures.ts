@@ -46,10 +46,8 @@ const referenceSchema = z.object({
   volume: z.string().min(1),
   pages: z.string().min(1),
   doi: z.string().regex(/^10\.\d{4,9}\/\S+$/),
-  pmid: z
-    .string()
-    .regex(/^\d{5,9}$/)
-    .optional(),
+  // Every new reference must have been resolved in PubMed (see the header comment).
+  pmid: z.string().regex(/^\d{5,9}$/),
 });
 
 export const brainStructureSchema = z.object({

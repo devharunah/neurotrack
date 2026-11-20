@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { EXPLORER_MODES, type ExplorerItem, itemsForMode } from "@/lib/brain/catalog";
 
 import { useExplorer, useExplorerStore } from "./explorer-context";
+import { displayName } from "./info-panel";
 
 /** Mode switch: anatomy structures, or the reward circuit inside a see-through cortex. */
 export function ModeSwitch() {
@@ -60,14 +61,14 @@ export function StructureList({ className = "" }: { className?: string }) {
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search…"
         autoComplete="off"
-        className="mt-2 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus-visible:outline-2 focus-visible:outline-sky-300"
+        className="mt-2 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white placeholder:text-white/60 focus-visible:outline-2 focus-visible:outline-sky-300"
       />
       {items.length === 0 && (
         <p className="mt-3 text-xs text-white/55">No structure matches “{query.trim()}”.</p>
       )}
       {groupItems(items).map(([group, groupItemsList]) => (
         <div key={group} className="mt-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-white/50">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-white/60">
             {group}
           </h3>
           <ul className="mt-1.5 grid gap-1">
@@ -94,7 +95,7 @@ export function StructureList({ className = "" }: { className?: string }) {
                       className="size-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="min-w-0">{item.name}</span>
+                    <span className="min-w-0">{displayName(item)}</span>
                   </button>
                 </li>
               );

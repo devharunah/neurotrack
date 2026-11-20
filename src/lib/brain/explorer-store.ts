@@ -104,8 +104,13 @@ export function createExplorerStore(initial: Partial<ExplorerState> = {}): Explo
       }
       const item = getExplorerItem(state.mode, slug);
       if (!item) return;
-      // The camera moves to the item's preferred view, which may need a hemisphere hidden.
-      setState({ selected: slug, hiddenSide: VIEW_PRESETS[item.view].hideSide ?? null });
+      // The camera moves to the item's preferred view, which may need a hemisphere hidden; the
+      // menu view no longer describes the camera, so it goes back to "default".
+      setState({
+        selected: slug,
+        view: "default",
+        hiddenSide: VIEW_PRESETS[item.view].hideSide ?? null,
+      });
     },
     hover(slug) {
       setState({ hovered: slug });

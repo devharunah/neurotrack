@@ -134,15 +134,15 @@ function animateNodes(
     uniforms.uItemColor.value.copy(item ? itemColor(item) : TISSUE);
 
     const ghostTint = role === "ghost-item" ? (isSelected ? 1 : 0.55) : seeThrough ? 1 : 0;
-    const results = [
-      approachColor(material.color, base, rate),
-      approach(uniforms.uHighlight, isSelected ? 1 : 0, rate),
-      approach(uniforms.uHover, isHovered ? 1 : 0, rate),
-      approach(uniforms.uDim, dim ? 1 : 0, rate),
-      approach(uniforms.uGhost, ghost ? (seeThrough ? 0.8 : 1) : 0, rate),
-      approach(uniforms.uGhostTint, ghostTint, rate),
-    ];
-    if (results.some(Boolean)) settling = true;
+    // Bitwise OR, not ||: every uniform must step this frame, without allocating.
+    const moving =
+      Number(approachColor(material.color, base, rate)) |
+      Number(approach(uniforms.uHighlight, isSelected ? 1 : 0, rate)) |
+      Number(approach(uniforms.uHover, isHovered ? 1 : 0, rate)) |
+      Number(approach(uniforms.uDim, dim ? 1 : 0, rate)) |
+      Number(approach(uniforms.uGhost, ghost ? (seeThrough ? 0.8 : 1) : 0, rate)) |
+      Number(approach(uniforms.uGhostTint, ghostTint, rate));
+    if (moving) settling = true;
   }
   return settling;
 }
@@ -179,8 +179,14 @@ export function BrainModel({ reducedMotion }: { reducedMotion: boolean }) {
 
   useEffect(() => {
     store.setModelReady(true);
-    return () => store.setModelReady(false);
-  }, [store]);
+    // With an on-demand frame loop, any state change (hover, selection, mode) must ask for a
+    // frame; the transitions then keep requesting frames until they settle.
+    const unsubscribe = store.subscribe(() => invalidate());
+    return () => {
+      unsubscribe();
+      store.setModelReady(false);
+    };
+  }, [store, invalidate]);
 
   useFrame((_, delta) => {
     const rate = reducedMotion ? 1 : 1 - Math.exp(-delta * DAMPING);

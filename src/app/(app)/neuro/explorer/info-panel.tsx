@@ -108,8 +108,15 @@ function Heading({
           </span>
         )}
       </div>
-      <p className="mt-1 text-xs text-white/55">
-        {item.nodes.some((n) => n.startsWith("mid_")) ? "Midline" : "Both hemispheres"}
+      <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/55">
+        <span>
+          {item.nodes.every((n) => n.startsWith("mid_")) ? "Spans the midline" : "Both hemispheres"}
+        </span>
+        {item.approximate && (
+          <span className="rounded-full border border-amber-300/40 bg-amber-300/10 px-2 py-0.5 font-medium text-amber-100">
+            Approximate location
+          </span>
+        )}
       </p>
     </>
   );
@@ -213,6 +220,23 @@ function Welcome() {
 export const GLASS =
   "border border-white/10 bg-[#0b1424]/85 text-white shadow-2xl backdrop-blur-md";
 
+/** Short screen-reader announcement of the selection (the panel itself is too long to read). */
+export function SelectionAnnouncer() {
+  const mode = useExplorer((state) => state.mode);
+  const selected = useExplorer((state) => state.selected);
+  const item = selected ? getExplorerItem(mode, selected) : undefined;
+  return (
+    <p className="sr-only" aria-live="polite">
+      {item ? `Selected: ${displayName(item)}` : ""}
+    </p>
+  );
+}
+
+/** Name as shown in the 3D tag and the list; flags locations the model can only approximate. */
+export function displayName(item: ExplorerItem): string {
+  return item.approximate ? `${item.name} (approx.)` : item.name;
+}
+
 /** Information about the selected structure, or the welcome text when nothing is selected. */
 export function InfoPanel({ className = "" }: { className?: string }) {
   const store = useExplorerStore();
@@ -223,7 +247,6 @@ export function InfoPanel({ className = "" }: { className?: string }) {
   return (
     <section
       aria-labelledby="region-panel-heading"
-      aria-live="polite"
       className={`relative rounded-2xl p-5 ${GLASS} ${className}`}
       data-testid="region-panel"
     >
