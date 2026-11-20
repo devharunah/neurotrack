@@ -22,3 +22,9 @@ logs/
 
 # Playwright saved sessions
 e2e/.auth/
+
+# 3D brain source assets and pipeline output: licence of the source model is unverified,
+# so neither the OBJ nor anything derived from it is committed until it is cleared.
+assets-src/
+tools/brain-pipeline/out/
+public/models/brain*.glb
