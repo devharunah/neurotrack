@@ -19,6 +19,7 @@ from mathutils import Vector
 
 ARGS = sys.argv[sys.argv.index("--") + 1 :]
 SRC, OUT = Path(ARGS[0]), Path(ARGS[1])
+MODES = ("VERTEX",) if "--vertex" in ARGS else ("SINGLE", "OBJECT")
 OUT.mkdir(parents=True, exist_ok=True)
 
 
@@ -61,7 +62,7 @@ def main() -> None:
         "py": Vector((0, 1, 0)), "ny": Vector((0, -1, 0)),
         "pz": Vector((0, 0, 1)), "nz": Vector((0, 0, -1)),
     }
-    for mode in ("SINGLE", "OBJECT"):
+    for mode in MODES:
         sh.color_type = mode
         for name, d in views.items():
             cam.location = centre + d * max(size) * 3
