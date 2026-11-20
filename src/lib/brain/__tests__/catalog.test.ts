@@ -53,6 +53,10 @@ describe("explorer catalog", () => {
     expect(getExplorerItem("deep", "nucleus-accumbens")?.name).toBe("Nucleus accumbens");
   });
 
+  it("reveals only the insula, which is folded away under other lobes", () => {
+    expect(EXPLORER_ITEMS.filter((i) => i.reveal).map((i) => i.slug)).toEqual(["insula"]);
+  });
+
   it("marks the VTA as approximate", () => {
     expect(getExplorerItem("deep", "ventral-tegmental-area")?.approximate).toBeTruthy();
   });

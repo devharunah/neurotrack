@@ -3,6 +3,8 @@ import {
   DEFAULT_DISTANCE,
   MIN_DISTANCE,
   VIEW_PRESETS,
+  VIEW_SHORTCUTS,
+  focalOffsetForInsets,
   framingDistance,
   isViewPresetId,
   viewPosition,
@@ -65,5 +67,29 @@ describe("camera views", () => {
     expect(framingDistance(5)).toBe(DEFAULT_DISTANCE);
     expect(framingDistance(0.5)).toBeGreaterThan(MIN_DISTANCE);
     expect(framingDistance(0.5)).toBeLessThan(DEFAULT_DISTANCE);
+  });
+});
+
+describe("panel-aware framing", () => {
+  it("shifts the view towards the uncovered side", () => {
+    const [x, y] = focalOffsetForInsets({ left: 0, right: 300, bottom: 0 }, 4, 600);
+    expect(x).toBeGreaterThan(0);
+    expect(y).toBe(-0);
+    const [, up] = focalOffsetForInsets({ left: 0, right: 0, bottom: 200 }, 4, 600);
+    expect(up).toBeLessThan(0);
+  });
+
+  it("is zero with no panels and scales with distance", () => {
+    expect(focalOffsetForInsets({ left: 0, right: 0, bottom: 0 }, 4, 600)).toEqual([0, -0]);
+    const near = focalOffsetForInsets({ left: 0, right: 300, bottom: 0 }, 2, 600)[0];
+    const far = focalOffsetForInsets({ left: 0, right: 300, bottom: 0 }, 4, 600)[0];
+    expect(far).toBeCloseTo(near * 2);
+    expect(focalOffsetForInsets({ left: 0, right: 300, bottom: 0 }, 4, 0)).toEqual([0, 0]);
+  });
+
+  it("maps number keys to distinct views", () => {
+    const views = Object.values(VIEW_SHORTCUTS);
+    expect(new Set(views).size).toBe(views.length);
+    expect(VIEW_SHORTCUTS["7"]).toBe("medial-left");
   });
 });

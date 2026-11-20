@@ -20,6 +20,18 @@ export interface ExplorerState {
   hiddenSide: "lh" | "rh" | null;
   /** The 3D model has loaded and is on screen. */
   modelReady: boolean;
+  /** Structures mode: show every structure in its colour instead of tissue colour. */
+  atlasColors: boolean;
+  /** The browser dropped the WebGL context (driver reset, GPU memory pressure). */
+  contextLost: boolean;
+  /** Pixels of the stage covered by floating panels, so the camera can frame around them. */
+  insets: ScreenInsets;
+}
+
+export interface ScreenInsets {
+  left: number;
+  right: number;
+  bottom: number;
 }
 
 export type CameraCommand =
@@ -36,6 +48,9 @@ export interface ExplorerStore {
   setMode(mode: ExplorerMode): void;
   setPaused(paused: boolean): void;
   setModelReady(ready: boolean): void;
+  setAtlasColors(on: boolean): void;
+  setContextLost(lost: boolean): void;
+  setInsets(insets: ScreenInsets): void;
   setView(view: ViewPresetId): void;
   zoom(direction: 1 | -1): void;
   reset(): void;
@@ -49,6 +64,9 @@ export const INITIAL_STATE: ExplorerState = {
   view: "default",
   hiddenSide: null,
   modelReady: false,
+  atlasColors: false,
+  contextLost: false,
+  insets: { left: 0, right: 0, bottom: 0 },
 };
 
 export function createExplorerStore(initial: Partial<ExplorerState> = {}): ExplorerStore {
@@ -103,6 +121,17 @@ export function createExplorerStore(initial: Partial<ExplorerState> = {}): Explo
     },
     setModelReady(modelReady) {
       setState({ modelReady });
+    },
+    setAtlasColors(atlasColors) {
+      setState({ atlasColors });
+    },
+    setContextLost(contextLost) {
+      setState({ contextLost });
+    },
+    setInsets(insets) {
+      const { left, right, bottom } = state.insets;
+      if (insets.left === left && insets.right === right && insets.bottom === bottom) return;
+      setState({ insets: { ...insets } });
     },
     setView(view) {
       setState({ view, hiddenSide: VIEW_PRESETS[view].hideSide ?? null });

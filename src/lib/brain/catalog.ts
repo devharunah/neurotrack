@@ -39,6 +39,8 @@ export interface ExplorerItem {
   view: ViewPresetId;
   /** Set when the model shows only the location, not the boundary. */
   approximate?: string;
+  /** Hidden under other structures (the insula): selecting it makes them see-through. */
+  reveal?: boolean;
   /** Has a detail page at /neuro/regions/[slug]. */
   hasPage: boolean;
 }
@@ -79,6 +81,9 @@ const ITEM_VIEWS: Readonly<Record<string, ViewPresetId>> = {
   "prefrontal-cortex": "front-left",
 };
 
+/** Structures folded away under others, which need the others made see-through to be seen. */
+const REVEAL_ON_SELECT = new Set(["insula"]);
+
 const STRUCTURE_GROUPS: Readonly<Record<string, string>> = {
   "frontal-lobe": "Cerebral cortex",
   "parietal-lobe": "Cerebral cortex",
@@ -105,6 +110,7 @@ export const EXPLORER_ITEMS: readonly ExplorerItem[] = [
       parts: s.explorer.parts,
       nodes: nodesForParts(s.explorer.parts),
       view: ITEM_VIEWS[s.slug] ?? "default",
+      ...(REVEAL_ON_SELECT.has(s.slug) ? { reveal: true } : {}),
       hasPage: false,
     }),
   ),

@@ -58,6 +58,23 @@ describe("explorer store", () => {
     expect(store.getState()).toMatchObject({ selected: null, view: "default", hiddenSide: null });
   });
 
+  it("toggles atlas colours and records a lost graphics context", () => {
+    const store = createExplorerStore();
+    store.setAtlasColors(true);
+    store.setContextLost(true);
+    expect(store.getState()).toMatchObject({ atlasColors: true, contextLost: true });
+  });
+
+  it("updates screen insets only when a value changes", () => {
+    const store = createExplorerStore();
+    const listener = jest.fn();
+    store.subscribe(listener);
+    store.setInsets({ left: 0, right: 352, bottom: 0 });
+    store.setInsets({ left: 0, right: 352, bottom: 0 });
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(store.getState().insets).toEqual({ left: 0, right: 352, bottom: 0 });
+  });
+
   it("starts from a partial initial state", () => {
     const store = createExplorerStore({ mode: "deep", selected: "hippocampus" });
     expect(store.getState()).toMatchObject({

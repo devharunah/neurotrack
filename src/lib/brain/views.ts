@@ -91,6 +91,9 @@ export function framingDistance(radius: number, padding = 1.45, minimum = MIN_DI
  */
 export const DEEP_FOCUS_DISTANCE = 2.7;
 
+/** Closest the camera comes when focusing a structure in Structures mode. */
+export const STRUCTURE_FOCUS_DISTANCE = 2.2;
+
 /** Camera position for a view, orbiting `target` at `distance`. */
 export function viewPosition(
   view: ViewPreset,
@@ -103,4 +106,32 @@ export function viewPosition(
     target[1] + distance * Math.cos(view.polar),
     target[2] + distance * sinPolar * Math.cos(view.azimuth),
   ];
+}
+
+/** Number keys for the view presets (0 returns to the default view). */
+export const VIEW_SHORTCUTS: Readonly<Record<string, ViewPresetId>> = {
+  "0": "default",
+  "1": "left",
+  "2": "right",
+  "3": "anterior",
+  "4": "posterior",
+  "5": "superior",
+  "6": "inferior",
+  "7": "medial-left",
+};
+
+/**
+ * Camera focal offset (camera-space units) that keeps the target centred in the part of the
+ * stage not covered by floating panels. A panel on the right moves the view so the brain
+ * appears further left; a bottom sheet moves it up.
+ */
+export function focalOffsetForInsets(
+  insets: { left: number; right: number; bottom: number },
+  distance: number,
+  viewportHeightPx: number,
+): [number, number] {
+  if (viewportHeightPx <= 0) return [0, 0];
+  const visibleHeight = 2 * distance * Math.tan((CAMERA_FOV_DEG * Math.PI) / 360);
+  const unitsPerPx = visibleHeight / viewportHeightPx;
+  return [((insets.right - insets.left) / 2) * unitsPerPx, (-insets.bottom / 2) * unitsPerPx];
 }
