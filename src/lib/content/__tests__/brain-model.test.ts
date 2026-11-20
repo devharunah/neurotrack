@@ -7,9 +7,9 @@
 import { readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import brainModel from "./brain-model.json";
+import brainModel from "../brain-model.json";
 
-const ROOT = join(__dirname, "../../..");
+const ROOT = join(__dirname, "../../../..");
 const MAX_MODEL_BYTES = 3 * 1024 * 1024;
 
 interface StructureSpec {
