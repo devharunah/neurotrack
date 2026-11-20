@@ -171,8 +171,7 @@ const LEECH_SHARP_2014: Reference = {
 const BUCKNER_2013: Reference = {
   authors: "Buckner RL",
   year: 2013,
-  title:
-    "The cerebellum and cognitive function: 25 years of insight from anatomy and neuroimaging",
+  title: "The cerebellum and cognitive function: 25 years of insight from anatomy and neuroimaging",
   journal: "Neuron",
   volume: "80",
   pages: "807–815",

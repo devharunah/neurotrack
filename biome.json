@@ -32,7 +32,8 @@
       "src/lib/api/schema.d.ts",
       "supabase/**",
       "assets-src/**",
-      "tools/brain-pipeline/out/**"
+      "tools/brain-pipeline/out/**",
+      "e2e/.auth/**"
     ]
   }
 }
