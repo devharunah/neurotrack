@@ -5,9 +5,8 @@
  * on 2026-11-19 before it was added. Keep it that way: never add a reference you have not
  * resolved (see `.claude/rules/scientific-integrity.md`).
  *
- * Positions are for the stylised 3D explorer only. They are approximate and schematic: x is
- * left (-) to right (+), y is down (-) to up (+), z is back (-) to front (+), in units of the
- * stylised brain whose hemispheres span roughly ±1.4 on x, ±1.0 on y and ±1.6 on z.
+ * `explorer.parts` binds each region to parts of the 3D atlas model (see
+ * tools/brain-pipeline/structures.json and src/lib/content/brain-model.json).
  */
 
 export interface Reference {
@@ -35,11 +34,12 @@ export interface BrainRegion {
   addictionResearch: string;
   references: readonly Reference[];
   explorer: {
-    position: readonly [number, number, number];
-    /** Hex colour of the glowing mesh. */
+    /** Hex colour used for the region in the 3D explorer and the lists. */
     color: string;
-    /** Approximate radius of the mesh. */
-    radius: number;
+    /** Model parts (both hemispheres) that make up the region in the 3D explorer. */
+    parts: readonly string[];
+    /** Shown when the model can only indicate where the region lies, not its boundary. */
+    approximate?: string;
   };
 }
 
@@ -141,7 +141,7 @@ export const BRAIN_REGIONS: readonly BrainRegion[] = [
       KOOB_VOLKOW_2010,
       KOOB_VOLKOW_2016,
     ],
-    explorer: { position: [0, 0.35, 1.25], color: "#38bdf8", radius: 0.32 },
+    explorer: { color: "#38bdf8", parts: ["prefrontal", "anterior_cingulate"] },
   },
   {
     slug: "amygdala",
@@ -172,7 +172,7 @@ export const BRAIN_REGIONS: readonly BrainRegion[] = [
       EVERITT_ROBBINS_2005,
       KOOB_VOLKOW_2010,
     ],
-    explorer: { position: [0.62, -0.42, 0.35], color: "#f97316", radius: 0.15 },
+    explorer: { color: "#f97316", parts: ["amygdala"] },
   },
   {
     slug: "nucleus-accumbens",
@@ -212,7 +212,7 @@ export const BRAIN_REGIONS: readonly BrainRegion[] = [
       },
       HYMAN_MALENKA_NESTLER_2006,
     ],
-    explorer: { position: [0.22, -0.2, 0.62], color: "#ec4899", radius: 0.14 },
+    explorer: { color: "#ec4899", parts: ["nucleus_accumbens"] },
   },
   {
     slug: "basal-ganglia",
@@ -252,7 +252,7 @@ export const BRAIN_REGIONS: readonly BrainRegion[] = [
         pmid: "18558860",
       },
     ],
-    explorer: { position: [0.42, 0.18, 0.25], color: "#a3e635", radius: 0.22 },
+    explorer: { color: "#a3e635", parts: ["caudate", "putamen"] },
   },
   {
     slug: "hippocampus",
@@ -284,7 +284,7 @@ export const BRAIN_REGIONS: readonly BrainRegion[] = [
       HYMAN_MALENKA_NESTLER_2006,
       KOOB_VOLKOW_2010,
     ],
-    explorer: { position: [0.66, -0.38, -0.25], color: "#facc15", radius: 0.16 },
+    explorer: { color: "#facc15", parts: ["hippocampus"] },
   },
   {
     slug: "ventral-tegmental-area",
@@ -315,7 +315,12 @@ export const BRAIN_REGIONS: readonly BrainRegion[] = [
         pmid: "28053327",
       },
     ],
-    explorer: { position: [0, -0.62, -0.12], color: "#a78bfa", radius: 0.13 },
+    explorer: {
+      color: "#a78bfa",
+      parts: ["midbrain_tegmentum"],
+      approximate:
+        "The atlas has no separate boundary for the VTA. The highlighted volume is the midbrain tegmentum, which contains the VTA in its ventral part, so it shows where the VTA lies, not its outline.",
+    },
   },
 ];
 
@@ -341,21 +346,4 @@ export function regionSummary(region: BrainRegion): string {
   const text = region.rewardAndLearning.trim();
   const match = /^.+?[.!?](?=\s|$)/.exec(text);
   return match ? match[0] : text;
-}
-
-export type Vec3 = readonly [number, number, number];
-
-/**
- * Where to draw a region in the explorer. Bilateral structures (any region placed off the
- * midline) are mirrored into the left hemisphere, so they appear once in each hemisphere;
- * midline regions appear once.
- */
-export function explorerPositions(region: BrainRegion): Vec3[] {
-  const [x, y, z] = region.explorer.position;
-  return x === 0
-    ? [[x, y, z]]
-    : [
-        [x, y, z],
-        [-x, y, z],
-      ];
 }

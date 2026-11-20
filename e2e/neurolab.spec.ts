@@ -31,13 +31,18 @@ test.describe("signed in", () => {
   }) => {
     await signIn(page, "/neuro");
     await expect(page.getByRole("heading", { name: "NeuroLab", level: 1 })).toBeVisible();
-
-    const regions = page.getByRole("navigation", { name: "Brain regions" });
-    await expect(regions.getByRole("button")).toHaveCount(6);
-    // Either the 3D canvas or the no-WebGL notice is shown; the list works in both cases.
+    // Either the 3D canvas or the no-WebGL notice is shown; the lists work in both cases.
     await expect(
       page.getByTestId("brain-canvas").or(page.getByTestId("webgl-fallback")),
     ).toBeVisible();
+
+    const structures = page.getByRole("navigation", { name: "Brain structures" });
+    await expect(structures.getByRole("button")).toHaveCount(9);
+
+    await page.getByRole("button", { name: "Reward circuit", exact: true }).click();
+    const regions = page.getByRole("navigation", { name: "Deep structures" });
+    // The six reward-circuit regions, then the thalamus and hypothalamus.
+    await expect(regions.getByRole("button")).toHaveCount(8);
 
     const accumbens = regions.getByRole("button", { name: "Nucleus accumbens" });
     await accumbens.focus();
@@ -46,6 +51,8 @@ test.describe("signed in", () => {
 
     const panel = page.getByTestId("region-panel");
     await expect(panel.getByRole("heading", { name: "Nucleus accumbens" })).toBeVisible();
+    // The selection is shareable: it is mirrored into the URL without a navigation.
+    await expect(page).toHaveURL(/\/neuro\?mode=deep&s=nucleus-accumbens$/);
     await panel.getByRole("link", { name: /Read more/ }).click();
 
     await expect(page).toHaveURL(/\/neuro\/regions\/nucleus-accumbens$/);
@@ -53,6 +60,43 @@ test.describe("signed in", () => {
     const references = page.getByRole("region", { name: "References" });
     const doiLinks = references.locator('a[href^="https://doi.org/10."]');
     expect(await doiLinks.count()).toBeGreaterThanOrEqual(2);
+  });
+
+  test("a deep link opens an anatomy structure with sourced content", async ({ page }) => {
+    await page.goto("/neuro?s=cerebellum");
+    const panel = page.getByTestId("region-panel");
+    await expect(panel.getByRole("heading", { name: "Cerebellum" })).toBeVisible();
+    await expect(
+      page
+        .getByRole("navigation", { name: "Brain structures" })
+        .getByRole("button", { name: "Cerebellum" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(panel.getByRole("link", { name: "DOI" }).first()).toHaveAttribute(
+      "href",
+      /^https:\/\/doi\.org\/10\./,
+    );
+
+    await page.keyboard.press("Escape");
+    await expect(panel.getByRole("heading", { name: "Explore the brain" })).toBeVisible();
+    await expect(page).toHaveURL(/\/neuro$/);
+  });
+
+  test("the 3D model loads without CSP violations", async ({ page }) => {
+    const violations: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error" && /Content Security Policy/i.test(message.text())) {
+        violations.push(message.text());
+      }
+    });
+    await signIn(page, "/neuro");
+    const fallback = page.getByTestId("webgl-fallback");
+    test.skip(await fallback.isVisible(), "This browser has no WebGL");
+    // The meshopt decoder needs 'wasm-unsafe-eval'; a blocked decoder never reaches ready.
+    await expect(page.getByTestId("brain-canvas")).toHaveAttribute("data-ready", "true", {
+      timeout: 30_000,
+    });
+    await expect(page.getByTestId("brain-canvas").locator("canvas")).toBeVisible();
+    expect(violations).toEqual([]);
   });
 
   test("an unknown region slug shows the not-found page", async ({ page }) => {

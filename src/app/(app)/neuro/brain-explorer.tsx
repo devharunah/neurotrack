@@ -1,27 +1,36 @@
 "use client";
 
+import { useProgress } from "@react-three/drei";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { Component, type ReactNode, useState } from "react";
+import { Component, type ReactNode, useEffect, useState } from "react";
 
-import { BRAIN_REGIONS, getBrainRegion, regionSummary } from "@/lib/content/brain-regions";
-
+import {
+  ExplorerProvider,
+  useDeepLink,
+  useExplorer,
+  useExplorerStore,
+} from "./explorer/explorer-context";
+import { InfoPanel } from "./explorer/info-panel";
+import { ModeSwitch, StructureList } from "./explorer/structure-list";
+import { ViewerControls } from "./explorer/viewer-controls";
 import { usePrefersReducedMotion, useWebglSupport } from "./use-client-env";
 
-function CanvasPlaceholder({ text }: { text: string }) {
+function StageMessage({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-full items-center justify-center text-sm text-white/70">{text}</div>
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-white/75">
+      {children}
+    </div>
   );
 }
 
-const BrainCanvas = dynamic(() => import("./brain-canvas"), {
+const Stage = dynamic(() => import("./explorer/stage"), {
   ssr: false,
-  loading: () => <CanvasPlaceholder text="Loading 3D brain…" />,
+  loading: () => <StageMessage>Loading 3D brain…</StageMessage>,
 });
 
-/** Falls back to the region list if the 3D scene throws (for example, a lost WebGL context). */
+/** Shows a retry message if the 3D scene throws (model failed to load, lost WebGL context). */
 class SceneBoundary extends Component<
-  { fallback: ReactNode; children: ReactNode },
+  { onRetry: () => void; children: ReactNode },
   { failed: boolean }
 > {
   override state = { failed: false };
@@ -31,8 +40,33 @@ class SceneBoundary extends Component<
   }
 
   override render() {
-    return this.state.failed ? this.props.fallback : this.props.children;
+    if (!this.state.failed) return this.props.children;
+    return (
+      <StageMessage>
+        <p>The 3D view could not start. Every structure is still available from the list.</p>
+        <button
+          type="button"
+          onClick={this.props.onRetry}
+          className="rounded-full border border-white/25 px-4 py-1.5 text-white hover:bg-white/10"
+        >
+          Try again
+        </button>
+      </StageMessage>
+    );
   }
+}
+
+function LoadingIndicator() {
+  const { active, progress } = useProgress();
+  if (!active) return null;
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-white/10"
+      aria-hidden="true"
+    >
+      <div className="h-full bg-sky-300/80 transition-[width]" style={{ width: `${progress}%` }} />
+    </div>
+  );
 }
 
 function WebglNotice() {
@@ -42,164 +76,110 @@ function WebglNotice() {
       data-testid="webgl-fallback"
     >
       3D graphics (WebGL) are not available in this browser, so the brain model is hidden. Every
-      region is still available from the list.
+      structure is still available from the list.
     </p>
   );
 }
 
-function RegionList({
-  selected,
-  onSelect,
-  onHover,
-}: {
-  selected: string | null;
-  onSelect: (slug: string) => void;
-  onHover: (slug: string | null) => void;
-}) {
+function isTyping(target: EventTarget | null): boolean {
   return (
-    <nav aria-label="Brain regions">
-      <h2 className="text-sm font-semibold">Regions</h2>
-      <ul className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-        {BRAIN_REGIONS.map((region) => {
-          const isSelected = selected === region.slug;
-          return (
-            <li key={region.slug}>
-              <button
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => onSelect(region.slug)}
-                onMouseEnter={() => onHover(region.slug)}
-                onMouseLeave={() => onHover(null)}
-                onFocus={() => onHover(region.slug)}
-                onBlur={() => onHover(null)}
-                className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                  isSelected
-                    ? "border-neuro bg-neuro-soft font-medium text-neuro"
-                    : "border-line bg-card hover:bg-paper"
-                }`}
-              >
-                <span
-                  aria-hidden="true"
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: region.explorer.color }}
-                />
-                <span className="min-w-0">{region.name}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName))
   );
 }
 
-function RegionPanel({ slug }: { slug: string | null }) {
-  const region = slug ? getBrainRegion(slug) : undefined;
+/** Esc deselects, R resets the view, Space pauses or resumes rotation. */
+function useKeyboardShortcuts() {
+  const store = useExplorerStore();
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === "Escape") store.select(null);
+      if (isTyping(event.target)) return;
+      if (event.key === "r" || event.key === "R") store.reset();
+      if (event.key === " ") {
+        event.preventDefault();
+        store.setPaused(!store.getState().paused);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [store]);
+}
+
+function ExplorerLayout() {
+  const store = useExplorerStore();
+  useDeepLink(store);
+  useKeyboardShortcuts();
+  const reducedMotion = usePrefersReducedMotion();
+  const webgl = useWebglSupport();
+  const [attempt, setAttempt] = useState(0);
+  const mode = useExplorer((state) => state.mode);
+  const modelReady = useExplorer((state) => state.modelReady);
+
+  const sidebar = (
+    <div className="space-y-5">
+      <StructureList />
+      <InfoPanel />
+    </div>
+  );
+
   return (
-    <section
-      aria-labelledby="region-panel-heading"
-      aria-live="polite"
-      className="rounded-2xl border border-line bg-card p-5"
-      data-testid="region-panel"
-    >
-      {region ? (
-        <>
-          <div className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-3 shrink-0 rounded-full"
-              style={{ backgroundColor: region.explorer.color }}
-            />
-            <h2 id="region-panel-heading" className="font-semibold">
-              {region.name}
-            </h2>
-            <span className="rounded bg-neuro-soft px-1.5 py-0.5 font-mono text-[11px] text-neuro">
-              {region.abbreviation}
-            </span>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-ink-soft">{regionSummary(region)}</p>
-          <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">
-            Primary functions
-          </h3>
-          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm leading-6 text-ink-soft">
-            {region.primaryFunctions.slice(0, 3).map((fn) => (
-              <li key={fn}>{fn}</li>
-            ))}
-          </ul>
-          <Link
-            href={`/neuro/regions/${region.slug}`}
-            className="mt-4 inline-block text-sm font-medium text-neuro hover:underline"
-          >
-            Read more about the {region.name.toLowerCase()} →
-          </Link>
-        </>
+    <div className="space-y-4">
+      <ModeSwitch />
+      {webgl === false ? (
+        <div className="space-y-4">
+          <WebglNotice />
+          {sidebar}
+        </div>
       ) : (
-        <>
-          <h2 id="region-panel-heading" className="font-semibold">
-            Pick a region
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-ink-soft">
-            Click a glowing region in the model, or choose one from the list, to see a summary and
-            its sourced references.
-          </p>
-        </>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0">
+            <div
+              className="relative h-[420px] touch-none overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_50%_42%,_#1d2b44_0%,_#0d1729_58%,_#070d18_100%)] sm:h-[540px] lg:h-[min(74vh,720px)]"
+              data-testid="brain-canvas"
+              data-mode={mode}
+              data-ready={modelReady}
+            >
+              <SceneBoundary key={attempt} onRetry={() => setAttempt((n) => n + 1)}>
+                {webgl === "pending" ? (
+                  <StageMessage>Loading 3D brain…</StageMessage>
+                ) : (
+                  <Stage reducedMotion={reducedMotion} />
+                )}
+              </SceneBoundary>
+              <LoadingIndicator />
+              <div className="absolute inset-x-0 bottom-3 flex justify-center px-3">
+                <ViewerControls reducedMotion={reducedMotion} />
+              </div>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-muted">
+              Drag to rotate, scroll or pinch to zoom, right-drag to pan. Esc clears the selection,
+              R resets the view.
+              {reducedMotion
+                ? " Auto-rotation is off because your system asks for reduced motion."
+                : ""}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              Brain model: Human Reference Atlas (HuBMAP), built from the Allen Human Reference
+              Atlas, CC BY 4.0; modified for this explorer.{" "}
+              <a className="underline hover:text-ink" href="/models/ATTRIBUTION.md">
+                Attribution and changes
+              </a>
+            </p>
+          </div>
+          {sidebar}
+        </div>
       )}
-    </section>
+    </div>
   );
 }
 
 export function BrainExplorer() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const reducedMotion = usePrefersReducedMotion();
-  const webgl = useWebglSupport();
-
-  const sidebar = (
-    <div className="space-y-4">
-      <RegionList selected={selected} onSelect={setSelected} onHover={setHovered} />
-      <RegionPanel slug={selected} />
-    </div>
-  );
-
-  if (webgl === false) {
-    return (
-      <div className="space-y-4">
-        <WebglNotice />
-        {sidebar}
-      </div>
-    );
-  }
-
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="min-w-0">
-        <div
-          className="relative h-[340px] overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_center,_#1e2c44_0%,_#0f1b2d_70%)] sm:h-[460px] lg:h-[560px]"
-          data-testid="brain-canvas"
-        >
-          <SceneBoundary fallback={<CanvasPlaceholder text="The 3D view could not start." />}>
-            {webgl === "pending" ? (
-              <CanvasPlaceholder text="Loading 3D brain…" />
-            ) : (
-              <BrainCanvas
-                selected={selected}
-                hovered={hovered}
-                reducedMotion={reducedMotion}
-                onSelect={setSelected}
-                onHover={setHovered}
-              />
-            )}
-          </SceneBoundary>
-        </div>
-        <p className="mt-2 text-xs leading-5 text-muted">
-          Schematic model: shapes and positions are approximate and for orientation only. Bilateral
-          structures appear in both hemispheres. Drag to rotate, scroll or pinch to zoom.
-          {reducedMotion
-            ? " Auto-rotation is off because your system asks for reduced motion."
-            : ""}
-        </p>
-      </div>
-      {sidebar}
-    </div>
+    <ExplorerProvider>
+      <ExplorerLayout />
+    </ExplorerProvider>
   );
 }

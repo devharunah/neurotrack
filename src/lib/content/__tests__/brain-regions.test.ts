@@ -1,10 +1,5 @@
-import {
-  BRAIN_REGIONS,
-  explorerPositions,
-  formatReference,
-  getBrainRegion,
-  regionSummary,
-} from "../brain-regions";
+import brainModel from "../brain-model.json";
+import { BRAIN_REGIONS, formatReference, getBrainRegion, regionSummary } from "../brain-regions";
 
 const DOI = /^10\.\d{4,9}\//;
 
@@ -83,27 +78,19 @@ describe("explorer helpers", () => {
     }
   });
 
-  it("mirrors bilateral regions and keeps midline regions single", () => {
+  it("binds every region to parts that exist in the 3D model", () => {
+    const parts = new Set(Object.values(brainModel.nodes).map((node) => node.part));
     for (const region of BRAIN_REGIONS) {
-      const positions = explorerPositions(region);
-      const [x, y, z] = region.explorer.position;
-      if (x === 0) {
-        expect(positions).toEqual([[0, y, z]]);
-      } else {
-        expect(positions).toEqual([
-          [x, y, z],
-          [-x, y, z],
-        ]);
+      expect(region.explorer.parts.length).toBeGreaterThan(0);
+      for (const part of region.explorer.parts) {
+        expect(parts).toContain(part);
       }
     }
   });
 
-  it("places every region inside the stylised brain", () => {
-    for (const region of BRAIN_REGIONS) {
-      const [x, y, z] = region.explorer.position;
-      expect(Math.abs(x)).toBeLessThanOrEqual(1.4);
-      expect(Math.abs(y)).toBeLessThanOrEqual(1);
-      expect(Math.abs(z)).toBeLessThanOrEqual(1.6);
-    }
+  it("flags the VTA as an approximate location", () => {
+    expect(getBrainRegion("ventral-tegmental-area")?.explorer.approximate).toMatch(
+      /not its outline/,
+    );
   });
 });
