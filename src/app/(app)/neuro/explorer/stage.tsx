@@ -40,6 +40,13 @@ export default function Stage({ reducedMotion }: { reducedMotion: boolean }) {
         if (event.type === "click") store.select(null);
       }}
       onCreated={({ gl }) => {
+        // A lost context (driver reset, GPU memory pressure) leaves a frozen canvas; tell the
+        // layout so it can offer a restart. preventDefault lets the browser try to restore it.
+        gl.domElement.addEventListener("webglcontextlost", (event) => {
+          event.preventDefault();
+          store.setContextLost(true);
+        });
+        gl.domElement.addEventListener("webglcontextrestored", () => store.setContextLost(false));
         gl.domElement.setAttribute("role", "img");
         gl.domElement.setAttribute(
           "aria-label",

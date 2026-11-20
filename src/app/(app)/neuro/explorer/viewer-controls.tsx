@@ -3,7 +3,7 @@
 import { MENU_VIEWS, VIEW_PRESETS, isViewPresetId } from "@/lib/brain/views";
 
 import { useExplorer, useExplorerStore } from "./explorer-context";
-import { PauseIcon, PlayIcon, ResetIcon, ZoomInIcon, ZoomOutIcon } from "./icons";
+import { PaletteIcon, PauseIcon, PlayIcon, ResetIcon, ZoomInIcon, ZoomOutIcon } from "./icons";
 
 const BUTTON =
   "inline-flex size-9 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
@@ -13,6 +13,8 @@ export function ViewerControls({ reducedMotion }: { reducedMotion: boolean }) {
   const store = useExplorerStore();
   const paused = useExplorer((state) => state.paused);
   const view = useExplorer((state) => state.view);
+  const mode = useExplorer((state) => state.mode);
+  const atlasColors = useExplorer((state) => state.atlasColors);
   const rotating = !paused && !reducedMotion;
 
   return (
@@ -64,6 +66,18 @@ export function ViewerControls({ reducedMotion }: { reducedMotion: boolean }) {
       >
         <ZoomOutIcon />
       </button>
+      {mode === "structures" && (
+        <button
+          type="button"
+          className={`${BUTTON} ${atlasColors ? "bg-white/15 text-white" : ""}`}
+          onClick={() => store.setAtlasColors(!atlasColors)}
+          aria-pressed={atlasColors}
+          title={atlasColors ? "Show tissue colour" : "Colour each structure"}
+          aria-label="Colour each structure"
+        >
+          <PaletteIcon />
+        </button>
+      )}
       <label className="ml-1 flex items-center pr-1">
         <span className="sr-only">Camera view</span>
         <select

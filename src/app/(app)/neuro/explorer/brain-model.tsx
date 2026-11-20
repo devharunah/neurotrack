@@ -10,6 +10,7 @@ import {
   type ExplorerMode,
   MODEL_NODES,
   type NodeRole,
+  getExplorerItem,
   nodeItemMap,
   nodeRoles,
 } from "@/lib/brain/catalog";
@@ -99,10 +100,11 @@ function approachColor(color: Color, target: Color, rate: number): boolean {
  */
 function animateNodes(
   nodes: readonly NodeEntry[],
-  { mode, selected, hovered, hiddenSide }: ExplorerState,
+  { mode, selected, hovered, hiddenSide, atlasColors }: ExplorerState,
   rate: number,
 ): boolean {
   let settling = false;
+  const selectedItem = selected ? getExplorerItem(mode, selected) : undefined;
   for (const node of nodes) {
     const role = ROLES[mode].get(node.name) ?? "hidden";
     const item = ITEMS[mode].get(node.name);
@@ -110,9 +112,9 @@ function animateNodes(
     const isSelected = item !== undefined && item.slug === selected;
     const isHovered = item !== undefined && item.slug === hovered;
     const dim = selected !== null && !isSelected && (role === "pickable" || role === "context");
-    // In deep mode, other deep structures turn translucent around a selection so the
-    // selected one is never hidden behind its neighbours.
-    const seeThrough = mode === "deep" && dim;
+    // In deep mode (and for buried structures such as the insula), the other structures turn
+    // translucent around a selection so the selected one is never hidden behind them.
+    const seeThrough = dim && (mode === "deep" || selectedItem?.reveal === true);
     const ghost = role === "ghost" || role === "ghost-item" || seeThrough;
     node.mesh.visible = role !== "hidden" && node.side !== hiddenSide;
     node.mesh.renderOrder = ghost ? 1 : 0;
@@ -120,7 +122,15 @@ function animateNodes(
 
     // Deep-mode structures carry their colour all the time; in Structures mode the brain is
     // tissue-coloured and an item takes its colour only when selected.
-    const base = mode === "deep" && role === "pickable" && item ? itemColor(item) : TISSUE;
+    const coloured = role === "pickable" && (mode === "deep" || atlasColors);
+    const base = coloured && item ? itemColor(item) : TISSUE;
+    // Ghosts of inner, non-cortical parts (brainstem around the VTA) stay faint so the
+    // structures inside them keep their colour.
+    const info = MODEL_NODES[node.name];
+    uniforms.uGhostStrength.value = info?.group === "cortex" ? 1 : 0.25;
+    // A surface part shown solid among the deep structures (the midbrain tegmentum, for the
+    // VTA) had its AO baked as a buried surface; soften it so it keeps its colour.
+    uniforms.uAo.value = mode === "deep" && role === "pickable" && info?.surface ? 0.2 : 0.72;
     uniforms.uItemColor.value.copy(item ? itemColor(item) : TISSUE);
 
     const ghostTint = role === "ghost-item" ? (isSelected ? 1 : 0.55) : seeThrough ? 1 : 0;

@@ -46,3 +46,12 @@ export const ZoomOutIcon = () => (
     <path d="M5 10h10" />
   </Icon>
 );
+
+export const PaletteIcon = () => (
+  <Icon>
+    <path d="M10 3.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.7 1.2-1.6-.3-.9.3-1.9 1.3-1.9h1.6a2.4 2.4 0 0 0 2.4-2.4A6.6 6.6 0 0 0 10 3.5z" />
+    <circle cx="6.8" cy="9" r="0.9" />
+    <circle cx="9.5" cy="6.6" r="0.9" />
+    <circle cx="12.8" cy="7.6" r="0.9" />
+  </Icon>
+);

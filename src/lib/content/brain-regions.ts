@@ -316,7 +316,7 @@ export const BRAIN_REGIONS: readonly BrainRegion[] = [
       },
     ],
     explorer: {
-      color: "#a78bfa",
+      color: "#8b5cf6",
       parts: ["midbrain_tegmentum"],
       approximate:
         "The atlas has no separate boundary for the VTA. The highlighted volume is the midbrain tegmentum, which contains the VTA in its ventral part, so it shows where the VTA lies, not its outline.",

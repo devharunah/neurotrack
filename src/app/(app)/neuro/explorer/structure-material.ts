@@ -19,6 +19,8 @@ export interface StructureUniforms {
   uDim: IUniform<number>;
   uGhost: IUniform<number>;
   uGhostTint: IUniform<number>;
+  /** Scales the ghost's opacity: inner structures (brainstem) are fainter than the cortex. */
+  uGhostStrength: IUniform<number>;
   uAo: IUniform<number>;
   uItemColor: IUniform<Color>;
   uRimColor: IUniform<Color>;
@@ -31,6 +33,7 @@ uniform float uHover;
 uniform float uDim;
 uniform float uGhost;
 uniform float uGhostTint;
+uniform float uGhostStrength;
 uniform float uAo;
 uniform vec3 uItemColor;
 uniform vec3 uRimColor;
@@ -65,7 +68,7 @@ outgoingLight += uRimColor * fresnel * ( 0.16 + 0.45 * uHighlight ) * ( 1.0 - 0.
 vec3 ghostTone = mix( uGhostColor, uItemColor, uGhostTint );
 vec3 ghostLight = ghostTone * ( 0.12 + 0.9 * fresnel );
 float ghostAlpha = ( 0.02 + 0.32 * pow( fresnel, 1.4 ) ) * exposed * ( 1.0 + 1.6 * uGhostTint )
-  + 0.25 * uHighlight;
+  * uGhostStrength + 0.25 * uHighlight;
 outgoingLight = mix( outgoingLight, ghostLight, uGhost );
 diffuseColor.a = mix( diffuseColor.a, clamp( ghostAlpha, 0.0, 1.0 ), uGhost );
 #include <opaque_fragment>
@@ -87,6 +90,7 @@ export function createStructureMaterial(): StructureMaterial {
     uDim: { value: 0 },
     uGhost: { value: 0 },
     uGhostTint: { value: 0 },
+    uGhostStrength: { value: 1 },
     uAo: { value: 0.72 },
     uItemColor: { value: new Color(TISSUE_COLOR) },
     uRimColor: { value: new Color(RIM_COLOR) },

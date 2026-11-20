@@ -11,8 +11,10 @@ import {
   DEFAULT_DISTANCE,
   MAX_DISTANCE,
   MIN_DISTANCE,
+  STRUCTURE_FOCUS_DISTANCE,
   VIEW_PRESETS,
   type ViewPreset,
+  focalOffsetForInsets,
   framingDistance,
   viewPosition,
 } from "@/lib/brain/views";
@@ -40,6 +42,9 @@ export function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
   const ref = useRef<Controls>(null);
   const store = useExplorerStore();
   const scene = useThree((state) => state.scene);
+  // Read lazily: depending on the size would re-run the setup effect (and reset the camera)
+  // on every resize.
+  const getThree = useThree((state) => state.get);
   const motion = useRef({
     interacting: false,
     lastInput: Number.NEGATIVE_INFINITY,
@@ -54,9 +59,15 @@ export function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
       if (!controls) return;
       const [x, y, z] = viewPosition(view, target, distance);
       void controls.setLookAt(x, y, z, target[0], target[1], target[2], transition);
+      const [fx, fy] = focalOffsetForInsets(
+        store.getState().insets,
+        distance,
+        getThree().size.height,
+      );
+      void controls.setFocalOffset(fx, fy, 0, transition);
       motion.current.tweenUntil = performance.now() / 1000 + (transition ? TWEEN_SECONDS : 0);
     },
-    [animate],
+    [animate, getThree, store],
   );
 
   const focus = useCallback(
@@ -73,7 +84,7 @@ export function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
       if (box.isEmpty()) return;
       const sphere = box.getBoundingSphere(new Sphere());
       const centre = sphere.center.toArray() as [number, number, number];
-      const minimum = mode === "deep" ? DEEP_FOCUS_DISTANCE : MIN_DISTANCE;
+      const minimum = mode === "deep" ? DEEP_FOCUS_DISTANCE : STRUCTURE_FOCUS_DISTANCE;
       const distance = framingDistance(sphere.radius, undefined, minimum);
       goTo(VIEW_PRESETS[item.view], centre, distance, transition);
     },
@@ -89,8 +100,18 @@ export function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
       goTo(VIEW_PRESETS[initial.view], ORIGIN, DEFAULT_DISTANCE, false);
 
     let previous = initial.selected;
+    let previousInsets = initial.insets;
     const unsubscribe = store.subscribe(() => {
-      const { selected } = store.getState();
+      const { selected, insets } = store.getState();
+      if (insets !== previousInsets) {
+        // A panel opened or closed: re-centre in the space that is still visible.
+        previousInsets = insets;
+        const controls = ref.current;
+        if (controls) {
+          const [fx, fy] = focalOffsetForInsets(insets, controls.distance, getThree().size.height);
+          void controls.setFocalOffset(fx, fy, 0, animate);
+        }
+      }
       if (selected === previous) return;
       previous = selected;
       if (selected) focus(selected);
@@ -108,7 +129,7 @@ export function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
       unsubscribe();
       unsubscribeCommands();
     };
-  }, [animate, focus, goTo, store]);
+  }, [animate, focus, getThree, goTo, store]);
 
   useFrame((_, delta) => {
     const controls = ref.current;

@@ -15,18 +15,18 @@ import { getBrainStructure } from "@/lib/content/brain-structures";
 
 import { useExplorer, useExplorerStore } from "./explorer-context";
 
-const SECTION = "mt-4 text-xs font-semibold uppercase tracking-wide text-muted";
+const SECTION = "mt-4 text-xs font-semibold uppercase tracking-wide text-white/55";
 
 function References({ references }: { references: readonly Reference[] }) {
   return (
     <>
       <h3 className={SECTION}>References</h3>
-      <ul className="mt-1.5 space-y-2 text-xs leading-5 text-ink-soft">
+      <ul className="mt-1.5 space-y-2 text-xs leading-5 text-white/75">
         {references.map((ref) => (
           <li key={ref.doi}>
             {formatReference(ref)}{" "}
             <a
-              className="text-neuro hover:underline"
+              className="text-sky-300 hover:underline"
               href={doiUrl(ref.doi)}
               target="_blank"
               rel="noreferrer"
@@ -37,7 +37,7 @@ function References({ references }: { references: readonly Reference[] }) {
               <>
                 {" · "}
                 <a
-                  className="text-neuro hover:underline"
+                  className="text-sky-300 hover:underline"
                   href={pubmedUrl(ref.pmid)}
                   target="_blank"
                   rel="noreferrer"
@@ -69,7 +69,7 @@ function Related({ slugs }: { slugs: readonly string[] }) {
                 store.setMode(item.mode);
                 store.select(item.slug);
               }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs hover:bg-paper"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-2.5 py-1 text-xs text-white/85 hover:bg-white/10"
             >
               <span
                 aria-hidden="true"
@@ -92,8 +92,8 @@ function Heading({
 }: { item: ExplorerItem; category: string; abbreviation?: string }) {
   return (
     <>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{category}</p>
-      <div className="mt-1 flex items-center gap-2">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-white/55">{category}</p>
+      <div className="mt-1 flex items-center gap-2 pr-8">
         <span
           aria-hidden="true"
           className="size-3 shrink-0 rounded-full"
@@ -103,12 +103,12 @@ function Heading({
           {item.name}
         </h2>
         {abbreviation && (
-          <span className="rounded bg-neuro-soft px-1.5 py-0.5 font-mono text-[11px] text-neuro">
+          <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[11px] text-sky-200">
             {abbreviation}
           </span>
         )}
       </div>
-      <p className="mt-1 text-xs text-muted">
+      <p className="mt-1 text-xs text-white/55">
         {item.nodes.some((n) => n.startsWith("mid_")) ? "Midline" : "Both hemispheres"}
       </p>
     </>
@@ -122,20 +122,20 @@ function RegionDetails({ item }: { item: ExplorerItem }) {
     <>
       <Heading item={item} category="Reward circuit" abbreviation={region.abbreviation} />
       {item.approximate && (
-        <p className="mt-3 rounded-lg border border-amber-200 bg-warn-soft px-3 py-2 text-xs leading-5 text-warn">
+        <p className="mt-3 rounded-lg border border-amber-300/40 bg-amber-300/10 px-3 py-2 text-xs leading-5 text-amber-100">
           <strong className="font-semibold">Approximate location.</strong> {item.approximate}
         </p>
       )}
-      <p className="mt-3 text-sm leading-6 text-ink-soft">{regionSummary(region)}</p>
+      <p className="mt-3 text-sm leading-6 text-white/75">{regionSummary(region)}</p>
       <h3 className={SECTION}>Primary functions</h3>
-      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm leading-6 text-ink-soft">
+      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm leading-6 text-white/75">
         {region.primaryFunctions.slice(0, 3).map((fn) => (
           <li key={fn}>{fn}</li>
         ))}
       </ul>
       <Link
         href={`/neuro/regions/${region.slug}`}
-        className="mt-4 inline-block text-sm font-medium text-neuro hover:underline"
+        className="mt-4 inline-block text-sm font-medium text-sky-300 hover:underline"
       >
         Read more about the {region.name.toLowerCase()} →
       </Link>
@@ -150,19 +150,19 @@ function StructureDetails({ item }: { item: ExplorerItem }) {
     <>
       <Heading item={item} category={structure.category} />
       <h3 className={SECTION}>Location</h3>
-      <p className="mt-1.5 text-sm leading-6 text-ink-soft">{structure.location}</p>
+      <p className="mt-1.5 text-sm leading-6 text-white/75">{structure.location}</p>
       <h3 className={SECTION}>Primary functions</h3>
-      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm leading-6 text-ink-soft">
+      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm leading-6 text-white/75">
         {structure.primaryFunctions.map((fn) => (
           <li key={fn}>{fn}</li>
         ))}
       </ul>
       <h3 className={SECTION}>Associated processes</h3>
-      <p className="mt-1.5 text-sm leading-6 text-ink-soft">{structure.associatedProcesses}</p>
+      <p className="mt-1.5 text-sm leading-6 text-white/75">{structure.associatedProcesses}</p>
       {structure.addictionResearch && (
         <>
           <h3 className={SECTION}>In addiction research</h3>
-          <p className="mt-1.5 text-sm leading-6 text-ink-soft">{structure.addictionResearch}</p>
+          <p className="mt-1.5 text-sm leading-6 text-white/75">{structure.addictionResearch}</p>
         </>
       )}
       <Related slugs={structure.related} />
@@ -184,7 +184,7 @@ function Welcome() {
       <h2 id="region-panel-heading" className="text-lg font-semibold">
         Explore the brain
       </h2>
-      <p className="mt-2 text-sm leading-6 text-ink-soft">
+      <p className="mt-2 text-sm leading-6 text-white/75">
         Drag to rotate, scroll or pinch to zoom, and click a structure to learn what it does. Switch
         to <strong className="font-medium">Reward circuit</strong> to see the structures that
         research on reward and addiction returns to, inside a see-through brain.
@@ -198,7 +198,7 @@ function Welcome() {
               <button
                 type="button"
                 onClick={() => start(slug)}
-                className="rounded-full border border-line px-3 py-1 text-xs font-medium hover:bg-paper"
+                className="rounded-full border border-white/15 px-3 py-1 text-xs font-medium text-white/85 hover:bg-white/10"
               >
                 {item.name}
               </button>
@@ -210,7 +210,12 @@ function Welcome() {
   );
 }
 
-export function InfoPanel() {
+export const GLASS =
+  "border border-white/10 bg-[#0b1424]/85 text-white shadow-2xl backdrop-blur-md";
+
+/** Information about the selected structure, or the welcome text when nothing is selected. */
+export function InfoPanel({ className = "" }: { className?: string }) {
+  const store = useExplorerStore();
   const mode = useExplorer((state) => state.mode);
   const selected = useExplorer((state) => state.selected);
   const item = selected ? getExplorerItem(mode, selected) : undefined;
@@ -219,9 +224,22 @@ export function InfoPanel() {
     <section
       aria-labelledby="region-panel-heading"
       aria-live="polite"
-      className="rounded-2xl border border-line bg-card p-5"
+      className={`relative rounded-2xl p-5 ${GLASS} ${className}`}
       data-testid="region-panel"
     >
+      {item && (
+        <button
+          type="button"
+          onClick={() => store.select(null)}
+          aria-label="Close and clear the selection"
+          title="Close (Esc)"
+          className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
+        >
+          <span aria-hidden="true" className="text-lg leading-none">
+            ×
+          </span>
+        </button>
+      )}
       {!item && <Welcome />}
       {item?.kind === "region" && <RegionDetails item={item} />}
       {item?.kind === "structure" && <StructureDetails item={item} />}
