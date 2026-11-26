@@ -33,7 +33,7 @@
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
     "@supabase/ssr": "^0.12.3",
-    "@supabase/supabase-js": "^2.110.8",
+    "@supabase/supabase-js": "^2.119.2",
     "next": "16.4.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
